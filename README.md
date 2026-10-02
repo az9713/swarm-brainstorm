@@ -21,23 +21,7 @@ This project is not affiliated with Ethan Mollick or with TypeSafe AI.
 
 ## The prompt
 
-The original prompt, as quoted in the essay, names one topic:
-
-```
-Goal:
-Generate candidate ideas for the next OneUsefulThing post and choose one.
-
-Search strategy:
-Explore the idea space from as many different angles as possible.
-
-Evaluation:
-Assess candidates from:
-1. factual / evidentiary perspective
-2. reader perspective
-3. what other publications are covering
-```
-
-The modified prompt, which the skill sends, has two changes:
+The skill sends the prompt below. It is adapted from the prompt quoted in Mollick's essay, which named a single topic ("the next OneUsefulThing post"). It has two changes from that original:
 
 ```
 Goal:

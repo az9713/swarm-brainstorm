@@ -460,7 +460,7 @@ YOUR ANGLE: CROSS-DOMAIN TRANSFER. Look for decision patterns inside those odd e
 <ol>
   <li><b>Four mappers.</b> The list README is 231,420 bytes and the 16 category files total 167,674 bytes. I split the 16 category files by theme into four groups of 49,333; 36,647; 42,770; and 38,924 bytes. I aimed at roughly equal reading loads and at themes that belong together. I recorded no reason at the time for four groups instead of 16 or 2. Reasons that I can offer now, both untested: one agent per file would repeat the prompt overhead 16 times, and two agents would each read 80 KB or more, which risks skimming.</li>
   <li><b>Three ideators.</b> The mappers' gap lists suggested three themes: domains the list lacks, properties that the blog stresses and the list under-uses, and odd entries whose patterns could move to a new domain. I wrote one angle for each. I created no fourth angle and wrote down no reason.</li>
-  <li><b>The shape of run 1 carried over.</b> You asked me to forget the earlier results. I discarded the facts, but the structure (gather, ideate, judge) came from run 1, which was still in my context. The two runs share a shape for that reason, as well as for the reason that the same skill prompt drove both. The equal total of 7 agents per run was not planned. I noticed it afterwards.</li>
+  <li><b>The shape of run 1 carried over.</b> You asked me to forget the earlier results. I discarded the facts, but the structure (gather, ideate, judge) came from run 1, which was still in my context. The two runs share a shape for that reason, as well as for the reason that the same skill prompt drove both. The equal total of 7 agents per run was not planned, and I noticed it only afterwards.</li>
 </ol>
 
 <h3>7.5 What this does not show</h3>
@@ -498,9 +498,9 @@ YOUR ANGLE: CROSS-DOMAIN TRANSFER. Look for decision patterns inside those odd e
     </ul>
     I gave the agents the sources themselves, which is why they could check my summary of those sources.</li>
   <li><b>I misstated the list size.</b> I said "about 480 entries". The four mappers' tallies sum to 552 (156 + 115 + 142 + 139), and a line count of <code>- </code> lines across the category files gave 568, which includes template lines. The tallies are hand counts and can be off by 1 or 2 per category.</li>
-  <li><b>Evidence that could not be checked.</b> The coverage agent could not read Forbes (HTTP 403), and the Hacker News thread it fetched was a different one (Jevmem). The community agent marked many Reddit and arXiv items "index only". The facts agent had no API key and could not run a call. Final answers repeated these limits.</li>
+  <li><b>Evidence that could not be checked.</b> The coverage agent could not read Forbes (HTTP 403), and the Hacker News thread it fetched was a different one (Jevmem). The community agent marked many Reddit and arXiv items "index only". The facts agent had no API key and could not run a call, and my final answers repeated these limits.</li>
   <li><b>Weak evidence flagged late.</b> One candidate (volunteer-transcription adjudication) was rated "high novelty" after only 2 search queries. I kept the rating but wrote the weakness next to it.</li>
-  <li><b>Hook notices.</b> A "Coach" hook asked me to surface two notes verbatim. The first said the prompt was over 8k characters, which did not match the user's short message. The second said the session had reached about 156k context tokens. I surfaced both.</li>
+  <li><b>Hook notices.</b> A "Coach" hook asked me to surface two notes verbatim. The first said the prompt was over 8k characters, which did not match the user's short message. The second said the session had reached about 156k context tokens, and I surfaced both.</li>
 </ol>
 
 <h3>Near-misses</h3>
@@ -522,7 +522,7 @@ YOUR ANGLE: CROSS-DOMAIN TRANSFER. Look for decision patterns inside those odd e
 <ul>
   <li><b>Tokens:</b> 686,676 + 706,989 = 1,393,665 subagent tokens across 14 agents. The parent context reached about 156k tokens by mid-session (per the hook).</li>
   <li><b>Quotas and rate limits:</b> none hit. No Jev API calls were made, so no TypeSafe credit was spent.</li>
-  <li><b>User actions:</b> (1) invoked the skill, (2) answered the topic question with "do search/research on jev", (3) replaced the evidence base with two URLs, (4) asked for this document and for git readiness. No permission prompt blocked a tool.</li>
+  <li><b>User actions:</b> (1) invoked the skill, (2) answered the topic question with "do search/research on jev", (3) replaced the evidence base with two URLs, (4) asked for this document and for git readiness, and no permission prompt blocked a tool.</li>
 </ul>
 
 <h2>11. Verification</h2>

@@ -84,7 +84,6 @@ Nothing was built or tested. The thresholds in the results are proposals from th
 | `SKILL.md` | The skill, ready to install. |
 | `brainstorm-results.html` | Results of the Jev brainstorm. |
 | `DEVELOPMENT-JOURNEY.html` | The journey document with all 14 prompts. |
-| `HANDOFF.md` | Resume notes for the next working session. |
 
 ## Caveats
 

@@ -1,0 +1,18 @@
+# Saved copy of a third-party web page: 94 JS/CSS/image files, about 8 MB. Not our work.
+*_files/
+
+# OS clutter
+Thumbs.db
+.DS_Store
+
+# Tool cache written by the design hook
+.impeccable/
+
+# Saved copy of a third-party page. It embeds the logged-in reader account data (name, email, phone). Do not commit.
+The Dot and the Swarm*.html
+
+# Raw session transcripts moved here by the user. May hold personal data. Do not commit.
+.ignore/
+
+# Contains a private chat link; its prompt text is quoted in README.md
+prompt.txt

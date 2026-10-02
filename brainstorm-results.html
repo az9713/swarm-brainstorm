@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Brainstorm results: unreported Jev use cases</title>
+<style>
+  :root{--bg:#0f172a;--card:#1e293b;--text:#e2e8f0;--text2:#cbd5e1;--muted:#94a3b8;--a1:#fb923c;--a2:#2dd4bf;--line:#334155}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text2);font:16px/1.65 system-ui,-apple-system,"Segoe UI",sans-serif}
+  main{max-width:960px;margin:0 auto;padding:32px 16px 96px}
+  h1{color:var(--text);font-size:1.9rem;line-height:1.25;margin:0 0 8px}
+  h2{color:var(--a1);font-size:1.35rem;margin:44px 0 12px;border-bottom:1px solid var(--line);padding-bottom:6px}
+  h3{color:var(--a2);font-size:1.05rem;margin:26px 0 8px}
+  p{margin:0 0 14px}
+  a{color:var(--a2)}
+  code{background:var(--card);border:1px solid var(--line);border-radius:4px;padding:1px 5px;font-size:.88em;color:var(--text);word-break:break-word}
+  nav{display:flex;flex-wrap:wrap;gap:8px 18px;margin:0 0 22px;font-size:.92rem}
+  .meta{color:var(--muted);font-size:.92rem;margin-bottom:22px}
+  .box{background:var(--card);border:1px solid var(--a2);border-radius:8px;padding:14px 18px;margin:18px 0}
+  .box p:last-child{margin-bottom:0}
+  .tablewrap{overflow-x:auto;margin:14px 0 22px}
+  table{border-collapse:collapse;width:100%;min-width:620px;font-size:.9rem}
+  th,td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+  th{background:var(--card);color:var(--text);font-weight:600}
+  td.n{text-align:right;white-space:nowrap}
+  .hi{color:var(--a1);font-weight:600}
+  .pick td{background:rgba(45,212,191,.08)}
+  ol li,ul li{margin-bottom:8px}
+  footer{color:var(--muted);font-size:.85rem;margin-top:48px;border-top:1px solid var(--line);padding-top:12px}
+</style>
+</head>
+<body>
+<main>
+
+<nav>
+  <a href="#question">The question</a>
+  <a href="#run1">Run 1: open web</a>
+  <a href="#run2">Run 2: two sources</a>
+  <a href="#compare">Comparison</a>
+  <a href="#limits">What is not verified</a>
+  <a href="DEVELOPMENT-JOURNEY.html">Development journey</a>
+</nav>
+
+<h1>Brainstorm results: Jev use cases that have not been widely discussed</h1>
+<div class="meta">
+  Date: 2026-10-01. Produced with the <code>/swarm-brainstorm</code> skill in Claude Code (Sonnet 5.5). This page holds the results. The <a href="DEVELOPMENT-JOURNEY.html">development journey</a> explains how the 14 subagents worked.
+</div>
+
+<h2 id="question">1. The question and the two runs</h2>
+<p>Jev is the first "System One" model from TypeSafe AI. It takes unstructured state and a typed question. It returns a typed answer (a choice among up to 255 options, a score, or a boolean) with probabilities, and never returns free text. The question for the brainstorm was: <b>which use cases of Jev are not yet widely discussed?</b></p>
+<p>The same prompt ran twice, on two different evidence bases.</p>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Run</th><th>Evidence base</th><th>Subagents</th><th>Candidates</th><th>Chosen idea</th><th>Runner-up</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>Open web research</td><td class="n">7 (3 + 4)</td><td class="n">20</td><td class="hi">All-pairs contradiction scan of a policy corpus</td><td>Clause-ambiguity index</td></tr>
+    <tr><td>2</td><td>Only the <a href="https://typesafe.ai/blog/introducing-system-one-models-and-jev">TypeSafe launch blog</a> and the <a href="https://github.com/yibie/awesome-jev">awesome-jev</a> list</td><td class="n">7 (4 + 3)</td><td class="n">15</td><td class="hi">Dead-letter-queue triage with a replay contract</td><td>Questionnaire pretest with synthetic respondents</td></tr>
+  </tbody>
+</table>
+</div>
+<p>The prompt asked every candidate to be judged from three views: the factual or evidentiary view, the reader view, and what other publications cover. The agents handled the first and third views. The reader view was a judgment that I made in the parent session. No reader test was run.</p>
+
+<div class="box">
+  <p><b>What Jev is, from the launch blog.</b> Response time of 70 ms to 500 ms end to end. Input tokens at $0.042 per million, output tokens free. All outputs generated in parallel. Up to 255 choices per question. The blog calls its 0% type-error rate "non-empirical", and it names these uses: workflow routing, classification, scoring and extraction, map-reduce over large datasets, real-time applications, output verification, Doom, and wikiracing.</p>
+</div>
+
+<h2 id="run1">2. Run 1: open web research</h2>
+
+<h3>2.1 What the first stage found</h3>
+<ul>
+  <li><b>Coverage map.</b> One agent counted use-case categories over 27 pages. Saturated: agent safety gating and ticket triage (19 pages each), bulk labeling (15), games and control loops (14), reranking (13), model routing (12), moderation (10). Absent from every page read: healthcare, education, government, manufacturing and supply chain, procurement, translation, UX research, accounting, and robotics on real hardware.</li>
+  <li><b>Failure reports.</b> A fair die gave 82.9% stated probability on face 1 at 19.0% accuracy (chance is 16.7%). A stated 30% risk became 5.3%, 45% became 6.6%, and 55% became 95.9%. A Tetris player cleared 23, 115, and 23 lines on three seeds, against 118, 73, and 118 for a keyword regex.</li>
+  <li><b>Vendor facts.</b> Three question types. A 64k token limit for the state plus all questions, and 32k for the state plus the longest question. 40 requests per second and 100K tokens per second. Nine documented failure modes, including counting, math, and date comparison.</li>
+</ul>
+
+<h3>2.2 The 20 candidates</h3>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Angle (agent)</th><th>Candidate</th><th>Novelty</th><th>Fate</th></tr></thead>
+  <tbody>
+    <tr><td rowspan="5">Domains with zero coverage</td><td>Translation QA gate</td><td>High</td><td>Rejected (rank 7)</td></tr>
+    <tr><td>Permit application completeness</td><td>Medium</td><td>Rejected (rank 9)</td></tr>
+    <tr><td>Manufacturing nonconformance report routing</td><td>High</td><td>Rejected (rank 6)</td></tr>
+    <tr><td>Archives access and retention review</td><td>Medium to high</td><td>Rejected (rank 5)</td></tr>
+    <tr><td>Medical coding audit</td><td>Medium</td><td>Rejected (rank 10)</td></tr>
+    <tr><td rowspan="5">Architectural roles inside other systems</td><td>Jev as the comparator in a sort</td><td>Low</td><td>Rejected (low-novelty group)</td></tr>
+    <tr><td>Jev as the failure oracle in delta debugging</td><td>Medium</td><td>Rejected (rank 2)</td></tr>
+    <tr><td>Production semantic assert, sampled</td><td>Low to medium</td><td>Rejected (rank 11)</td></tr>
+    <tr><td>Surrogate labeler for A/B pre-screening</td><td>Low</td><td>Rejected (low-novelty group)</td></tr>
+    <tr><td>Semantic-cache hit verifier</td><td>Low</td><td>Rejected (low-novelty group)</td></tr>
+    <tr><td rowspan="5">Personal, science, civic</td><td>Claim-versus-table check for papers</td><td>Low</td><td>Rejected (low-novelty group)</td></tr>
+    <tr><td>Newsworthiness score for FOIA records</td><td>Low</td><td>Rejected (low-novelty group)</td></tr>
+    <tr><td>Genealogy same-person matching</td><td>Medium</td><td>Rejected (rank 3)</td></tr>
+    <tr><td>Adjudication of volunteer transcriptions</td><td>High, on 2 queries</td><td>Rejected (rank 8)</td></tr>
+    <tr><td>Stale-note checker</td><td>Medium</td><td>Rejected (rank 4)</td></tr>
+    <tr><td rowspan="5">Uses that depend on the probability output</td><td>Clause-ambiguity index</td><td>Medium</td><td>Runner-up (rank 1)</td></tr>
+    <tr><td>Phrase-level leakage probe</td><td>Low</td><td>Rejected (low-novelty group)</td></tr>
+    <tr class="pick"><td><b>All-pairs contradiction scan of a policy corpus</b></td><td>Medium</td><td class="hi">Chosen</td></tr>
+    <tr><td>Label-noise audit with a stability gate</td><td>Low</td><td>Rejected (low-novelty group)</td></tr>
+    <tr><td>Difficulty stratifier for test sets</td><td>Low</td><td>Rejected (low-novelty group)</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>2.3 The chosen idea: contradiction scan of a policy corpus</h3>
+<ol>
+  <li>Split a corpus of policies into clauses, for example a handbook, terms of service, or a grant rulebook.</li>
+  <li>Use embeddings to pick candidate pairs of clauses.</li>
+  <li>Ask Jev one question per pair, in both orders: "contradict / consistent / unrelated".</li>
+  <li>Flag a pair only when both orders say "contradict" with p of 0.7 or higher.</li>
+  <li>Check numbers and dates in code, not in Jev. The vendor lists counting, math, and date comparison as failure modes.</li>
+</ol>
+<p><b>Why it won.</b> The both-orders rule turns a documented weakness into a filter. A community audit found that the first-listed option gains 0.37. A human can verify each flagged pair by reading two clauses. No page in the coverage map covers government or public-sector use, and the search found no Jev-specific contradiction scan.</p>
+<p><b>Cost.</b> About 400 million tokens for 1,000 clauses in both orders, which is about $17 at $0.042 per million. The vendor request limit of 40 per second applied to about 999,000 calls gives about 6.9 hours, so the request limit is the tighter constraint. Putting one clause in the shared state and asking up to 13 questions per call should reduce this. The vendor cookbook reports 10.0 times faster for 13 questions in one request.</p>
+<p><b>Test.</b> Use the LegalWiz documents with injected contradictions. Pass if recall is 0.70 or higher in the top 200 flagged pairs and precision@50 is 0.50 or higher. These thresholds are an agent's proposal.</p>
+
+<h3>2.4 Rejected candidates, ranked</h3>
+<ol>
+  <li><b>Clause-ambiguity index.</b> Scores a clause by how much the answer changes under reworded questions. Brittleness of the model and ambiguity of the text are confounded, and the test needs human-labeled disputed clauses.</li>
+  <li><b>Delta debugging with Jev as the oracle.</b> An unstable oracle can drop the real cause of a failure.</li>
+  <li><b>Genealogy same-person matching.</b> Overlaps entity resolution, which is saturated. Common names are chance-like inputs.</li>
+  <li><b>Stale-note checker.</b> The audience is narrow.</li>
+  <li><b>Archives access and retention review.</b> A wrong "open" releases confidential material.</li>
+  <li><b>Manufacturing report routing.</b> No public dataset can test it.</li>
+  <li><b>Translation QA gate.</b> The vendor says English works best and other languages less well.</li>
+  <li><b>Volunteer-transcription adjudication.</b> The high novelty rating rests on 2 search queries.</li>
+  <li><b>Permit completeness.</b> Non-Jev vendors already sell it.</li>
+  <li><b>Medical coding audit.</b> A Jev prior-authorization proof of concept is adjacent.</li>
+  <li><b>Production semantic assert.</b> Test-time tools exist.</li>
+  <li><b>Low-novelty group.</b> Leakage probe, label-noise audit, difficulty stratifier, claim-versus-table check, FOIA scoring, sort comparator, A/B surrogate, cache verifier. Each has close prior art.</li>
+</ol>
+<p>The agents dropped four ideas before they wrote them, because Jev work already existed: prior authorization, interview coding, short-answer grading, and bookkeeping.</p>
+
+<h2 id="run2">3. Run 2: the launch blog and the awesome-jev list only</h2>
+
+<h3>3.1 What the first stage found</h3>
+<p>Four agents each read a slice of the list's category files (167,674 bytes in total, about 552 entries by their hand tallies). They reported:</p>
+<ul>
+  <li><b>Saturated:</b> GUI and browser action selection (about 19 entries), tool-call gating (about 18), coding-agent model routing (about 13), retrieval and reranking (about 20), language SDKs (about 23), open Jev replicas (about 33).</li>
+  <li><b>Empty or thin:</b> the scientific-pipelines category has 0 entries and compliance-legal has 2. Output-side guardrails have 1 entry. The list has no entry for healthcare, insurance, education, or manufacturing triage, and none for map-reduce, which the blog names.</li>
+  <li><b>Absent integrations:</b> n8n, Airflow, Kafka, dbt, Temporal, CrewAI, Redis, Elasticsearch, Qdrant, Cloudflare Workers, and OpenTelemetry. One later correction: a LangGraph entry does exist.</li>
+  <li><b>Limits recorded in the list:</b> the fair-die result (82.9% against 19.0%); a 706,048-parameter specialist that scored 99.7% against Jev's 83.6% on form filling; an open model that completed 38.5% of web tasks against 16.7% for Jev 1.13; and a cost study that measured Jev at 6.6 to 12.7 times an LLM's token cost on its task.</li>
+</ul>
+
+<h3>3.2 The 15 candidates</h3>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Angle (agent)</th><th>Candidate</th><th>Novelty</th><th>Fate</th></tr></thead>
+  <tbody>
+    <tr><td rowspan="5">Empty and thin domains</td><td>Insurance first-notice-of-loss routing</td><td>High</td><td>Rejected (rank 4)</td></tr>
+    <tr><td>Clinical-trial eligibility pre-screen</td><td>High</td><td>Rejected (rank 3)</td></tr>
+    <tr><td>Short-answer rubric scoring</td><td>High</td><td>Rejected (rank 12)</td></tr>
+    <tr><td>Shipment-exception handling</td><td>High</td><td>Rejected (rank 5)</td></tr>
+    <tr><td>Product-taxonomy assignment</td><td>Medium</td><td>Rejected (rank 11)</td></tr>
+    <tr><td rowspan="5">Properties the blog stresses</td><td>Entity resolution, one choice per record</td><td>Medium</td><td>Rejected (rank 10)</td></tr>
+    <tr><td>Root-cause hop navigation on a service graph</td><td>Medium</td><td>Rejected (rank 8)</td></tr>
+    <tr class="pick"><td><b>Dead-letter-queue triage with a replay contract</b></td><td>High</td><td class="hi">Chosen</td></tr>
+    <tr><td>Typed branch node in Airflow or Temporal</td><td>Low</td><td>Rejected (rank 13)</td></tr>
+    <tr><td>Material-change classification of page versions</td><td>High</td><td>Rejected (rank 2)</td></tr>
+    <tr><td rowspan="5">Cross-domain transfer from odd entries</td><td>Next-file prefetch from a recent-files list</td><td>High</td><td>Rejected (rank 14)</td></tr>
+    <tr><td>Local head for a voice end-of-turn decision</td><td>Medium</td><td>Rejected (rank 9)</td></tr>
+    <tr><td>Questionnaire pretest with synthetic respondents</td><td>High</td><td>Runner-up (rank 1)</td></tr>
+    <tr><td>Hazard-log risk map</td><td>Medium</td><td>Rejected (rank 6)</td></tr>
+    <tr><td>Hierarchical code assignment, one choice per level</td><td>Medium</td><td>Rejected (rank 7)</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>3.3 The chosen idea: dead-letter-queue triage with a replay contract</h3>
+<p>A message queue sends messages that keep failing to a "dead-letter queue". During an incident, thousands of these messages pile up, and an engineer sorts them by hand.</p>
+<ol>
+  <li>A small consumer reads each failed message: error, headers, and payload, about 600 tokens.</li>
+  <li>It adds about 30 known failure signatures, about 450 tokens.</li>
+  <li>Jev answers one choice: replay, replay after fix N, quarantine, or page a human.</li>
+  <li>Code enforces the contract. Only idempotent messages replay automatically, and Jev can never discard a message.</li>
+</ol>
+<p><b>Why it won.</b> The list has no entry for dead-letter queues. A grep of its README for "dead letter", "dlq", "kafka", "poison", "message queue", "rabbitmq", and "sqs" found no hit. The blog names workflow routing and real-time use, and the list has no streaming-operations entry. The worst error, a wrong replay, is blocked by the idempotency rule in code, so the design does not depend on Jev's probabilities being calibrated.</p>
+<p><b>Cost.</b> For one million messages at 1,050 tokens each, that is 1,050 MTok at $0.042, which is $44.10 for an incident hour. The token counts are an agent's assumption. The list's Jev for Physical AI entry reports $24.57 per million decisions, which is about 585 tokens per decision at the same price, a figure in the same range.</p>
+<p><b>Test.</b> Take 2,000 engineer-labeled messages. Pass if the replay class has 99% or higher agreement at p of 0.95 or higher, with 40% or higher coverage. Fail if any non-idempotent message is replayed automatically. The thresholds are an agent's proposal.</p>
+
+<h3>3.4 Rejected candidates, ranked</h3>
+<ol>
+  <li><b>Questionnaire pretest with synthetic respondents.</b> Uses the wording sensitivity of Jev as the measurement. It rests on one list entry whose repository I did not open, and correlated synthetic respondents are the main risk.</li>
+  <li><b>Material-change classification of policy or terms pages.</b> The blog has no long-context benchmark, and a missed change is the costly error.</li>
+  <li><b>Clinical-trial eligibility pre-screen.</b> The list's medical entries are exams and hallucination tests. A wrong "not met" removes an eligible patient.</li>
+  <li><b>Insurance first-notice-of-loss routing.</b> New industry on a routing pattern that the list already covers heavily.</li>
+  <li><b>Shipment-exception handling.</b> Same problem. The nearest entry is warehouse robot triage.</li>
+  <li><b>Hazard-log risk map.</b> Depends on score ordering, and the list records a ranking benchmark that failed four of six conditions.</li>
+  <li><b>Hierarchical code assignment.</b> Errors compound: 0.9 per level gives 65.6% over four levels.</li>
+  <li><b>Root-cause hop navigation.</b> An existing entry uses the method on a knowledge graph. 0.9 per hop gives 59% over five hops.</li>
+  <li><b>Voice end-of-turn local head.</b> Adapts the list's stuntd pattern. Voice turn-taking appears as a demo.</li>
+  <li><b>Entity resolution with one choice per record.</b> Costs $1,722 for 10 million records against $5,040 for pairwise questions. The list already has a pairwise tool.</li>
+  <li><b>Product-taxonomy assignment.</b> The mechanism is shown on other item types.</li>
+  <li><b>Short-answer rubric scoring.</b> The list records a subjective-scoring test where no model beat the label base rates.</li>
+  <li><b>Airflow or Temporal branch node.</b> Only the engine names are new.</li>
+  <li><b>Next-file prefetch.</b> A plain recency rule likely wins.</li>
+</ol>
+<p>The agents dropped systematic-review screening, support-ticket routing, and spam moderation before ranking, because the list covers them.</p>
+
+<h2 id="compare">4. Comparing the two runs</h2>
+<ul>
+  <li><b>The winners differ.</b> Run 1 produced a corpus-level analysis tool and run 2 produced an operational pipeline step. The two evidence bases led to different ideas.</li>
+  <li><b>Both winners have a code-side guard.</b> In run 1, code handles numbers and dates and the both-orders rule filters Jev's output. In run 2, the idempotency rule limits the action that Jev can trigger. This pattern appeared in both choices. I did not test whether it is general.</li>
+  <li><b>The runner-ups both use Jev's weakness as the measurement.</b> The clause-ambiguity index and the questionnaire pretest both measure how much the answer changes under reworded questions.</li>
+  <li><b>The run-2 list had more candidates marked "high novelty" (8 of 15) than run 1 (3 of 20).</b> Part of the cause is the method. Run 2 judged novelty by grepping one list, and run 1 searched the web.</li>
+</ul>
+
+<h2 id="limits">5. What is not verified</h2>
+<ul>
+  <li>No candidate was built, and no call to Jev was made. Every validation threshold is an agent's proposal.</li>
+  <li>The agents read search summaries and some pages. I opened only a few of the sources myself.</li>
+  <li>The novelty ratings are only as good as the searches. Run 1 searched the web, and run 2 searched one curated list.</li>
+  <li>The list's entries are not endorsements, by the list's own warning. Several entries cited here are personal repositories that I did not run.</li>
+  <li>This is one task, run twice, with one model. The runs give no measure of variance.</li>
+</ul>
+
+<footer>Not affiliated with TypeSafe AI or Ethan Mollick. Jev figures come from the TypeSafe launch blog, the awesome-jev list, and web pages read by the agents in run 1. See the <a href="DEVELOPMENT-JOURNEY.html">development journey</a> for the agents' prompts and for how they worked.</footer>
+
+</main>
+</body>
+</html>

@@ -1,0 +1,552 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Development Journey: swarm-brainstorm on Jev</title>
+<style>
+  :root{--bg:#0f172a;--card:#1e293b;--text:#e2e8f0;--text2:#cbd5e1;--muted:#94a3b8;--a1:#fb923c;--a2:#2dd4bf;--line:#334155}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text2);font:16px/1.65 system-ui,-apple-system,"Segoe UI",sans-serif}
+  main{max-width:920px;margin:0 auto;padding:32px 16px 96px}
+  h1{color:var(--text);font-size:1.9rem;line-height:1.25;margin:0 0 8px}
+  h2{color:var(--a1);font-size:1.35rem;margin:48px 0 12px;border-bottom:1px solid var(--line);padding-bottom:6px}
+  h3{color:var(--a2);font-size:1.05rem;margin:28px 0 8px}
+  p{margin:0 0 14px}
+  a{color:var(--a2)}
+  code{background:var(--card);border:1px solid var(--line);border-radius:4px;padding:1px 5px;font-size:.88em;color:var(--text);word-break:break-word}
+  pre{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px;overflow-x:auto;font-size:.85rem;color:var(--text)}
+  pre code{background:none;border:0;padding:0}
+  .meta{color:var(--muted);font-size:.92rem;margin-bottom:24px}
+  .meta div{margin:2px 0}
+  .box{background:var(--card);border:1px solid var(--a2);border-radius:8px;padding:14px 18px;margin:18px 0}
+  .box p:last-child{margin-bottom:0}
+  .tablewrap{overflow-x:auto;margin:14px 0 22px}
+  table{border-collapse:collapse;width:100%;min-width:640px;font-size:.9rem}
+  th,td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+  th{background:var(--card);color:var(--text);font-weight:600}
+  td.n{text-align:right;white-space:nowrap}
+  .stage{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin:10px 0}
+  .stage b{color:var(--a1)}
+  .flow{display:grid;grid-template-columns:1fr;gap:8px;margin:16px 0}
+  .flow .s{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px 14px}
+  .flow .s .t{color:var(--a1);font-weight:600}
+  .flow .s .c{color:var(--a2);font-size:.85rem}
+  .quote{color:var(--text);font-style:italic}
+  ol li,ul li{margin-bottom:8px}
+  .rule{color:var(--a2);font-weight:600}
+  h4{color:var(--text);font-size:1rem;margin:26px 0 4px}
+  .agent{border-top:1px solid var(--line);margin-top:18px;padding-top:4px}
+  .agentmeta{color:var(--muted);font-size:.85rem;margin-bottom:10px}
+  details{margin:10px 0 18px}
+  summary{cursor:pointer;color:var(--a2);font-weight:600}
+  details pre{white-space:pre-wrap;word-break:break-word;margin-top:8px}
+  footer{color:var(--muted);font-size:.85rem;margin-top:48px;border-top:1px solid var(--line);padding-top:12px}
+</style>
+</head>
+<body>
+<main>
+
+<h1>Development Journey: using <code>/swarm-brainstorm</code> on "Jev use cases"</h1>
+<div class="meta">
+  <div><b>Date:</b> 2026-10-01</div>
+  <div><b>Deliverable:</b> this document, <code>DEVELOPMENT-JOURNEY.html</code>, in <code>dot_vs_swarm_ethan\</code></div>
+  <div><b>Brief:</b> <span class="quote">"jev use cases that have not been widely discussed"</span> (first run, argument to <code>/swarm-brainstorm</code>)</div>
+  <div><b>Model:</b> Sonnet 5.5 (<code>claude-sonnet-5-5</code>) as the parent session. Subagents used the Agent tool with <code>subagent_type: general-purpose</code> and no model override.</div>
+  <div><b>Source of this text:</b> the live session transcript and the 14 subagent completion notices. Nothing here is reconstructed from memory of an earlier session.</div>
+</div>
+
+<p>See also: <a href="brainstorm-results.html">the brainstorm results</a>, which list every candidate and the two chosen ideas.</p>
+
+<div class="box">
+  <p><b>The short version.</b> <code>/swarm-brainstorm</code> contains no code and no agent definitions. It is one prompt with three parts: a goal, a search strategy ("as many different angles as possible"), and three evaluation views. The prompt ends with one permission: "You may delegate. Organize the work as you think is best."</p>
+  <p>In this session the parent model read that permission and chose the structure. It ran the prompt twice, on two different evidence bases. Each run used 7 subagents in two stages. A third stage had no subagents: the parent merged the reports and judged them. The rest of this page shows what happened, stage by stage.</p>
+</div>
+
+<h2>1. The brief: what was actually being asked</h2>
+<p>The session began after <code>/clear</code>. The user typed <code>/swarm-brainstorm</code> with the argument <span class="quote">"jev use cases that have not been widely discussed"</span>. The skill text then loaded into the context. Its procedure has four steps: take the topic, run the prompt with <code>{TOPIC}</code> replaced, start subagents as judged useful, and report four things (the chosen idea, the reason, the ranked rejected list, and the number of subagents started).</p>
+<p>The skill's source is Ethan Mollick, "The Dot and the Swarm". Its rule: <span class="rule">do not define teams, roles, or agent counts</span>. Mollick's own prompt made a model start 3 agents with no team sketch. The skill was written in an earlier session. <code>HANDOFF.md</code> records that it was created, never run, and that its four planned tests were still to do.</p>
+
+<h3>Interpretation, and an ambiguity left open</h3>
+<p>I could not read "jev". The folder gave no clue. A grep for <code>\bjev\b|JEV</code> matched only two minified asset files of the saved article (<code>1580.d88a54d8.css</code> and <code>1580.c49ad9e4.js.download</code>). I asked the user for the full name and started no agent. This cost one turn. The user answered with a second invocation: <span class="quote">"jev use cases that have not been widely discussed. do search/research on jev"</span>. That is the brief the agents worked from.</p>
+<p>Later the user changed the evidence base: <span class="quote">"forget your earlier research results. use these instead"</span>, followed by two URLs, the TypeSafe AI launch blog and the <code>yibie/awesome-jev</code> list. I treat this as a second run of the same skill. I kept the first run in this document because it shows how the same prompt produced a different structure on different evidence.</p>
+
+<h3>Invisible constraints on this session</h3>
+<ul>
+  <li><code>~/.claude/CLAUDE.md</code>: ASD-STE100 sentences, precise (non-rhetorical) claims, plain-language explanation, and the "finish, or say what you left" rule.</li>
+  <li>The <code>ponytail</code> mode (level full) and focus mode. Focus mode means the user saw only my final message of each turn. Each final message therefore had to carry the findings by itself.</li>
+  <li>Two skills: <code>swarm-brainstorm</code> and, for this document, <code>dev-journey</code>.</li>
+</ul>
+
+<h2>2. Setup: how the session reached a working state</h2>
+<p>There was no environment to repair. The work needed only the Agent tool, WebSearch, WebFetch, Bash, Grep, Glob, and Read. Two items were reused from earlier sessions: the skill file <code>~\.claude\skills\swarm-brainstorm\SKILL.md</code>, and <code>HANDOFF.md</code>, which told me the skill's purpose, its source, and its untested status.</p>
+<p>The folder at minute zero was not a git repository. It held the saved Mollick article (an HTML file and a <code>_files</code> directory of 94 items), <code>prompt.txt</code>, <code>gpt6_summary.txt</code>, <code>cc1_dot_swarm.txt</code>, <code>cc2_dot_swarm.txt</code>, <code>cc3_dot_swarm.txt</code>, and <code>HANDOFF.md</code>.</p>
+
+<h3>Identifying the topic (run 1, stage 0, no agents)</h3>
+<p>After the user said to research it, I loaded WebSearch and WebFetch with ToolSearch and ran three searches in parallel: "JEV AI agents use cases", <code>"jev" claude code OR LLM OR agent OR tool 2026</code>, and "JEV Japanese encephalitis virus new applications 2026". The first two returned the same entity. The third returned virology papers, so I dropped it. Result: Jev is the "System One" decision model from TypeSafe AI. It returns a typed answer with probabilities instead of text. Search results gave 15 Sep 2026 as the launch date. A later agent found a page that says 28 Sep, and I left that unresolved.</p>
+
+<h2>3. Design decisions</h2>
+<p>The skill leaves the structure to the parent. These were my decisions, with the options that lost.</p>
+<table>
+  <thead><tr><th>Decision</th><th>Chosen</th><th>Rejected, and why</th></tr></thead>
+  <tbody>
+    <tr><td>Delegate or work inline</td><td>Delegate</td><td>Inline work would put about 27 fetched pages into one context and give one point of view. The skill also says delegation is allowed.</td></tr>
+    <tr><td>Tool for delegation</td><td>Agent tool, parallel calls in one message</td><td>The Workflow tool needs an explicit opt-in ("use a workflow", "ultracode"). The user gave none.</td></tr>
+    <tr><td>One agent per evaluation view (3 agents)</td><td>No</td><td>The three views judge candidates, and candidates do not exist at the start. The agents first gathered facts and mapped existing coverage, then proposed ideas.</td></tr>
+    <tr><td>Stage order</td><td>Orient/map, then ideate, then judge</td><td>Ideation first would have produced the listicle ideas that the topic excludes. The ideators needed a "do not propose" list from a stage before them.</td></tr>
+    <tr><td>Who judges</td><td>The parent, with no agent</td><td>Ranking needs all reports at once. The reports were short (under 800 words each), so the parent could hold them all.</td></tr>
+    <tr><td>Agent brief</td><td>Facts, a "do not propose" list, one angle, one output size cap</td><td>A brief with only the topic would have made every ideator repeat the same generic ideas.</td></tr>
+  </tbody>
+</table>
+<p><b>Descoped on purpose:</b> no agent for the reader view (see section 4), no code, no repository changes in the research phase, and no memory file written. In run 2 I used no web search at all, because the user limited the evidence to two sources.</p>
+
+<h2>4. The crux: how one 25-line prompt turned into stages</h2>
+<p>The question this document answers is: what does the skill do, and what does the model do? The table below separates them. Section 5 holds the exact prompt of every agent. Sections 6 and 7 cover how the agents communicated and how I chose their number.</p>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Part of the prompt</th><th>What the skill supplies</th><th>What the parent model chose in this session</th></tr></thead>
+  <tbody>
+    <tr><td>Goal: "Generate candidate ideas for {TOPIC} and choose one."</td><td>The objective and the "choose one" requirement.</td><td>Candidate format: the decision, input/output, fit, failure risk, and a pass/fail test.</td></tr>
+    <tr><td>Search strategy: "as many different angles as possible"</td><td>Only the sentence.</td><td>Which angles exist. Run 1 ideators: uncovered domains, architectural roles, personal/civic/science, probability as product. Run 2 ideators: empty and thin domains, blog properties, cross-domain transfer.</td></tr>
+    <tr><td>Evaluation 1: factual / evidentiary</td><td>The view.</td><td>Run 1: a facts agent plus a pass/fail test in each candidate. Run 2: a grep check and cost arithmetic that I ran myself.</td></tr>
+    <tr><td>Evaluation 2: reader perspective</td><td>The view.</td><td>No agent. I applied it in the final judgment. This is a gap: nobody tested it against real readers.</td></tr>
+    <tr><td>Evaluation 3: what other publications cover</td><td>The view.</td><td>Run 1: a coverage-map agent that read 27 pages. Run 2: four mappers over the awesome list, then a novelty grep in every ideator.</td></tr>
+    <tr><td>"You may delegate. Organize the work as you think is best."</td><td>Permission.</td><td>Everything else: the number of agents (7 per run), the stages (2 with agents, 1 without), who gets which slice, and the order.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>Run 1: open web research (7 agents)</h3>
+<div class="flow">
+  <div class="s"><div class="t">Stage 0: identify the topic</div><div class="c">0 agents. 3 parallel searches in the parent.</div></div>
+  <div class="s"><div class="t">Stage 1: orient</div><div class="c">3 agents in parallel. Facts and limits. Coverage map. Community builds.</div></div>
+  <div class="s"><div class="t">Stage 2: ideate</div><div class="c">4 agents in parallel, one angle each. Each checked its candidates for prior art on the web.</div></div>
+  <div class="s"><div class="t">Stage 3: judge</div><div class="c">0 agents. The parent merged 7 reports, applied the 3 views, and ranked the 20 candidates. It chose a policy-corpus contradiction scan.</div></div>
+</div>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Stage</th><th>Agent role</th><th class="n">Tool uses</th><th class="n">Tokens</th><th class="n">Wall-clock</th><th>What it returned</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>Facts and limits (primary sources only)</td><td class="n">31</td><td class="n">113,672</td><td class="n">286 s</td><td>Verified limits: 64k context for state plus all questions, 32k for state plus the longest question, 40 requests/s, 100K tokens/s. A list of claims it could not verify.</td></tr>
+    <tr><td>1</td><td>Coverage map of existing use-case articles</td><td class="n">38</td><td class="n">109,626</td><td class="n">147 s</td><td>27 pages counted. Saturated: agent safety gating (19 pages), ticket triage (19). Zero pages: healthcare, education, government, manufacturing.</td></tr>
+    <tr><td>1</td><td>Community builds and critiques</td><td class="n">15</td><td class="n">103,354</td><td class="n">200 s</td><td>Ten unusual builds and a table of failure reports, such as the fair-die test (82.9% stated, 19.0% accuracy).</td></tr>
+    <tr><td>2</td><td>Ideate: domains with zero coverage</td><td class="n">19</td><td class="n">94,925</td><td class="n">89 s</td><td>5 candidates: translation QA, permits, manufacturing reports, archives, medical coding.</td></tr>
+    <tr><td>2</td><td>Ideate: architectural roles inside other systems</td><td class="n">10</td><td class="n">83,916</td><td class="n">69 s</td><td>5 candidates, none rated high novelty. Best: delta debugging with Jev as the oracle.</td></tr>
+    <tr><td>2</td><td>Ideate: personal, science, civic</td><td class="n">8</td><td class="n">80,715</td><td class="n">58 s</td><td>5 candidates, including genealogy matching and a stale-note checker.</td></tr>
+    <tr><td>2</td><td>Ideate: uses that depend on the probability output and its limits</td><td class="n">20</td><td class="n">100,468</td><td class="n">118 s</td><td>5 candidates, including a clause-ambiguity index and an all-pairs contradiction scan.</td></tr>
+  </tbody>
+</table>
+</div>
+<p>Totals for run 1: 7 agents, 141 tool uses, 686,676 subagent tokens. The shortest ideator took 58 s and the longest agent took 286 s.</p>
+
+<h3>Run 2: two user-supplied sources (7 agents)</h3>
+<div class="flow">
+  <div class="s"><div class="t">Stage 0: get the sources</div><div class="c">0 agents. One WebFetch worked (the blog). One failed (the list). Fix: GitHub API plus <code>curl</code> of the raw files.</div></div>
+  <div class="s"><div class="t">Stage 1: map the list</div><div class="c">4 agents in parallel. Each read a slice of the category files. No web search.</div></div>
+  <div class="s"><div class="t">Stage 2: ideate</div><div class="c">3 agents in parallel. Each had the maps and checked novelty by grepping the list.</div></div>
+  <div class="s"><div class="t">Stage 3: verify and judge</div><div class="c">0 agents. The parent ran one grep command, checked the cost arithmetic, and chose dead-letter-queue triage.</div></div>
+</div>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Stage</th><th>Agent role</th><th class="n">Tool uses</th><th class="n">Tokens</th><th class="n">Wall-clock</th><th>What it returned</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>Map: agent-decisions, verification-guardrails, calibration-research (156 entries)</td><td class="n">4</td><td class="n">93,191</td><td class="n">55 s</td><td>Patterns and counts. Saturated: GUI action selection (about 19), tool-call gating (about 18), open replicas (about 33).</td></tr>
+    <tr><td>1</td><td>Map: classification-routing, scoring-ranking, content-moderation, data-labeling (115 entries)</td><td class="n">5</td><td class="n">87,764</td><td class="n">54 s</td><td>Saturated: coding-agent routing, reranking (about 20). No entry for healthcare, insurance, legal, education.</td></tr>
+    <tr><td>1</td><td>Map: infra-sdks, evaluation, adaptive UI (142 entries)</td><td class="n">6</td><td class="n">93,169</td><td class="n">56 s</td><td>23 language SDKs. No entry for n8n, Airflow, Kafka, dbt, Temporal. No concurrent-load latency benchmark.</td></tr>
+    <tr><td>1</td><td>Map: games, robotics, finance, compliance, science, discussions (139 entries)</td><td class="n">13</td><td class="n">106,596</td><td class="n">200 s</td><td>12 practice signals with no case page. It corrected two counts in my brief (section 9).</td></tr>
+    <tr><td>2</td><td>Ideate: empty and thin domains</td><td class="n">9</td><td class="n">103,748</td><td class="n">426 s</td><td>Insurance routing, clinical-trial pre-screen, rubric scoring, shipment exceptions, product taxonomy.</td></tr>
+    <tr><td>2</td><td>Ideate: exploit blog properties (fan-out, 255 choices, free output)</td><td class="n">16</td><td class="n">106,712</td><td class="n">450 s</td><td>5 candidates with cost arithmetic. Best: dead-letter-queue triage, material-change classification.</td></tr>
+    <tr><td>2</td><td>Ideate: cross-domain transfer from odd entries</td><td class="n">20</td><td class="n">115,809</td><td class="n">335 s</td><td>Questionnaire pretest, next-file prefetch, voice end-of-turn head, hazard-log map, hierarchical coding.</td></tr>
+  </tbody>
+</table>
+</div>
+<p>Totals for run 2: 7 agents, 73 tool uses, 706,989 subagent tokens. The mapping agents read local copies of the list, so three of them finished in under 60 s.</p>
+
+<div class="box">
+  <p><b>What the two runs show.</b> The same prompt produced the same overall shape twice: a stage that gathers and maps, a stage that ideates from separate angles, and a judgment step in the parent. Both runs used 7 agents. The split differed: 3 then 4 in run 1, and 4 then 3 in run 2. The data does not show why. Two runs on one task cannot support a claim that the model scales the agent count to the task size. <code>HANDOFF.md</code> lists that as an open test, and this session did not close it.</p>
+</div>
+
+<h3>Why the "angles" matter</h3>
+<p>The skill's search strategy says only "as many different angles as possible". The parent turned each angle into a separate briefing, so the ideators did not repeat one another. In run 1 the briefs shared a "do not propose" list built from the coverage agent's saturated categories. Without the stage before, that list could not exist. This is where the staging changed the content of the ideas.</p>
+
+<h2>5. The agents one by one</h2>
+<p>Section 4 gives one table row per agent. This section gives each agent its own entry: why it existed, what its prompt asked, what it returned, where it fell short, and how I used the result. Under each entry is the exact prompt that the agent received.</p>
+<p><b>How to read the entries.</b> A subagent started with the Agent tool begins with no memory of the session. The prompt is everything it knows. This is why every prompt carries facts, limits, and a "do not propose" list. The agent's last message came back to me as a task notification. Entry numbers run 1.x and 2.x for run 1, and 3.x and 4.x for run 2. Every agent used <code>subagent_type: general-purpose</code> and the default model. The short label in each entry is the <code>description</code> field of the Agent call.</p>
+<p><b>One change to the prompts.</b> The prompts are copied as sent. The only edit is that the local scratchpad folder path in the run-2 prompts is replaced by the placeholder <code>[local scratchpad folder]</code>, because the real path contains a user name.</p>
+<h3>Run 1, stage 1: orient (3 agents)</h3>
+<div class="agent">
+<h4>Agent 1.1: Facts and limits</h4>
+<div class="agentmeta">Call label: <code>Jev facts and limits</code> &middot; 31 tool uses &middot; 113,672 tokens &middot; 286 s</div>
+<p><b>Why this agent.</b> Every later agent needed correct facts about Jev. The search snippets and the listicles disagree with each other on basic numbers. I gave one agent the job of reading only primary sources (the vendor site, the docs, the API reference) and of sorting every claim into "verified" or "not verified".</p>
+<p><b>What the prompt does.</b> It names the entity and repeats the numbers I had from search snippets ("p50 about 230 ms"), without a source. It lists the topics to cover. It names two secondary sources to test, one of which claims a pitfall the vendor omits. It fixes the output at three numbered parts and 700 words. The third part asks for use cases that the listicles miss, so this agent also did a small amount of ideation.</p>
+<p><b>What came back.</b> Three question types (<code>noul</code>, <code>choice</code>, <code>score</code>). Price $0.042 per million input tokens. A 64k token limit for the state plus all questions and a 32k limit for the state plus the longest single question. 255 options for <code>choice</code>. Rate limits of 100K tokens per second and 40 requests per second. Nine documented failure modes for jev-1.13, including counting, math, and date comparison. A reranking result on legal retrieval (top-1 from 5% to 18%, top-10 from 38% to 62%, 1,200 calls for $0.0645). A batching result: 13 questions in one request were 12.2 times cheaper and 10.0 times faster. It listed unverified claims: the gist's error rates for positional references (86 of 320 wrong at 150 items per request), and the "p50 about 230 ms" figure, which has only a community plugin as its source. The vendor gives a range of 70 ms to 500 ms.</p>
+<p><b>Limits.</b> The agent had no API key, so it made no call and worked from documentation only. The agent also reported that a listicle (the Flavio Copes post) quotes rate limits that differ from the vendor page.</p>
+<p><b>How I used it.</b> The 40 requests-per-second limit changed the cost estimate of the run-1 winner. Token cost alone gave about 1.1 hours at 100K tokens per second. The request limit gave about 6.9 hours. The failure list (counting, math, dates) is the reason the winning design gives numbers and dates to code. The agent's 64k and 32k split reached the user in my report, but the four ideators had already received only the 32k figure in their briefs.</p>
+<details open><summary>Exact prompt for agent 1.1</summary><pre><code>Topic: "Jev" = the System One decision model from TypeSafe AI (came out of stealth 15 Sep 2026, $40M seed). It returns typed answers with probabilities, not text. About $0.042 per 1M input tokens, output free, p50 about 230 ms. Do web research (WebSearch/WebFetch) on PRIMARY sources: the TypeSafe AI site and docs, launch post, API reference, pricing, benchmarks, input limits, supported task types (classify, check, score, rank, ask), calibration claims, escalation behavior, known pitfalls. Also read https://flaviocopes.com/jev/ and the gist https://gist.github.com/pedramamini/014676fa8684d91bf7000f4623701ada (it claims a 'measured pitfall the vendor docs omit'). Report: (1) verified capabilities and hard limits with numbers, each with its source URL; (2) things claimed by secondary sources that you could NOT verify in a primary source; (3) any capability that suggests a use case the typical listicles would miss. Under 700 words. Be precise; quote numbers exactly.</code></pre></details>
+</div>
+<div class="agent">
+<h4>Agent 1.2: Coverage map of existing use-case articles</h4>
+<div class="agentmeta">Call label: <code>Map covered Jev use cases</code> &middot; 38 tool uses &middot; 109,626 tokens &middot; 147 s</div>
+<p><b>Why this agent.</b> The topic was "use cases that have not been widely discussed". To find what is not discussed, someone had to count what is. This agent is the direct answer to the third evaluation view ("what other publications are covering"), moved to the start of the process.</p>
+<p><b>What the prompt does.</b> It lists ten pages to read. Nine came from my first search; the tenth (the explainx compaction post) came from the second. It asks for counts per category, so the saturated categories become visible, and for the categories with one source or none. It also asks which publication took which angle.</p>
+<p><b>What came back.</b> A count over 27 pages (nine of my ten pages had Jev text; the Kanerika page returned none; the agent found 18 more). Saturated categories: agent safety gating and ticket triage (19 pages each), bulk labeling (15), games and control loops (14), reranking (13), routing (12), moderation (10). Categories with zero pages: healthcare, education, government, manufacturing and supply chain, procurement, translation, UX research, accounting, and robotics on real hardware. Categories with one page: meeting-transcript tagging, voice-agent interruption decisions, network packet-filter loops. It also grouped publications by angle: launch news, tutorial, listicle, critique.</p>
+<p><b>Limits.</b> The Forbes page returned HTTP 403. The Hacker News, Reddit, and X items came from search snippets and one aggregator page, not from the threads. The Hacker News thread the agent fetched was a different one (Jevmem).</p>
+<p><b>How I used it.</b> Its saturated list became the "ALREADY WIDELY DISCUSSED (do NOT propose)" block in all four ideator prompts of this run. Its zero-coverage list became the angle of ideator 2.1.</p>
+<details open><summary>Exact prompt for agent 1.2</summary><pre><code>Topic: "Jev" = the System One decision model from TypeSafe AI (launched 15 Sep 2026). Goal: build a COVERAGE MAP of which use cases are ALREADY widely discussed. Read these (WebFetch) and any others you find: huggingface.co/blog/karmen-beatapi/18-practical-jev-use-cases-for-ai-agents, aiblewmymind.substack.com/p/jev-ai-use-cases, kanerika.com/blogs/jev-ai-use-cases/, shop.zimaspace.com/blogs/tech-ai-hub/jev-use-cases-decision-model-examples, manjeet.substack.com/p/9-practical-places-to-use-jev-in, dev.to/ravi_kumar3481/jev-ai-what-it-is-how-it-works-use-cases-benefits-limitations-and-jev-vs-llms-1jc1, mindstudio.ai/blog/jev-use-cases-automation, marktechpost.com/2026/09/27/20-agentic-use-cases-of-typesafe-ais-jev/, ayautomate.com/blog/jev-use-cases, explainx.ai/blog/fast-jev-compaction-claude-code-plugin-2026. Also search for coverage on Hacker News, Reddit, X, newsletters, and TechCrunch-type news about Jev. Report: (1) a deduplicated list of use-case CATEGORIES with how many sources mention each (so I can see which are saturated); (2) the set of categories mentioned by only 1 source or none; (3) which publications covered Jev and which angle each took (launch news, tutorial, listicle, critique). Under 800 words, include URLs.</code></pre></details>
+</div>
+<div class="agent">
+<h4>Agent 1.3: Community builds and critiques</h4>
+<div class="agentmeta">Call label: <code>Jev community builds and critiques</code> &middot; 15 tool uses &middot; 103,354 tokens &middot; 200 s</div>
+<p><b>Why this agent.</b> The coverage agent counts articles. Articles are not builds. I wanted a second view from the people who wrote code, because the unusual use cases and the failure reports live there.</p>
+<p><b>What the prompt does.</b> It names five repositories I had seen in the first search and tells the agent to find more. It lists the places to look. It asks for three outputs: ten unusual builds, failure reports with numbers, and what the community says is missing. The last sentence asks the agent to mark anything it could not verify.</p>
+<p><b>What came back.</b> The agent worked mainly from two curated indexes: <code>awesome-jev</code> and <code>jev-in-the-wild</code>. It read the Hacker News thread, a dice write-up, the Tetris repository, and an arXiv survey in full. It returned ten builds (for example a Tetris player, a SQL token decoder, a persona simulator, a sponsor-segment detector). Its failure table is the most-used page of this run: a fair die gave 82.9% stated probability on face 1 at 19.0% accuracy (chance is 16.7%); a stated 30% risk became 5.3%, 45% became 6.6%, and 55% became 95.9%; the Tetris player cleared 23, 115, and 23 lines on three seeds against 118, 73, and 118 for a keyword regex.</p>
+<p><b>Limits.</b> The agent did not open Reddit, X, or Discord. Many rows in its table are marked "index only", which means it read the index entry and not the source.</p>
+<p><b>How I used it.</b> Its table became the "Known limits from community reports" paragraph of every ideator prompt in this run. It also pointed to a list called <code>awesome-jev</code> (the <code>cobanov</code> repository). You later chose a different list with the same name, <code>yibie/awesome-jev</code>, as the sole evidence base of run 2.</p>
+<details open><summary>Exact prompt for agent 1.3</summary><pre><code>Topic: "Jev" = the System One decision model from TypeSafe AI (launched 15 Sep 2026; returns typed answers plus probabilities, not text). Goal: find what real people BUILT or SAID about it that is off the main path. Search GitHub (repos like jev-gateway, jevXagent, jev-use, jev-code, jev-architect, and others you find via search), Hacker News, Reddit, X, blogs, Discord write-ups. Look for: unusual or non-agent applications (data cleaning, science, games, hardware, finance, legal, accessibility, education, security, personal tools), failed experiments, measured pitfalls, criticisms, and comparisons to small classifiers or embeddings. Report: (1) the 10 most unusual real builds or ideas with URL and one-sentence description each; (2) concrete failure or limit reports with numbers; (3) what the community says is missing or unexplored. Under 800 words. Mark anything you could not verify.</code></pre></details>
+</div>
+<h3>Run 1, stage 2: ideate (4 agents)</h3>
+<div class="agent">
+<h4>Agent 2.1: Ideate: domains with zero coverage</h4>
+<div class="agentmeta">Call label: <code>Ideation: uncovered domains</code> &middot; 19 tool uses &middot; 94,925 tokens &middot; 89 s</div>
+<p><b>Why this agent.</b> This is the "go where nobody went" angle: the domains with zero pages in the coverage map.</p>
+<p><b>What the prompt does.</b> It repeats the facts, the community limits, and the saturated list from stage 1, so the agent starts with the same knowledge as the parent. The angle is a list of twelve domains. The task asks for five candidates in a fixed shape (decision, input and output, fit, risk, test) and then a web check for prior art.</p>
+<p><b>What came back.</b> Five candidates: a translation QA gate, permit application completeness, manufacturing nonconformance report routing, archives access and retention review, and a medical coding audit. It dropped four ideas before it wrote: prior authorization, interview coding, short-answer grading, and bookkeeping, because its search found existing Jev work for each. It rated translation QA and manufacturing as high novelty.</p>
+<p><b>Limits.</b> It read search summaries and not full pages. It noticed that one source lists a 64k request limit, against the 32,000 tokens in my brief, and told me to check it.</p>
+<p><b>How I used it.</b> All five went into the rejected list. Translation QA lost on the vendor's note that English works best and other languages less well, and manufacturing lost because no public dataset can test it.</p>
+<details open><summary>Exact prompt for agent 2.1</summary><pre><code>Context: "Jev" = TypeSafe AI's System One decision model (launched 15 Sep 2026). It returns a typed answer (label, yes/no, score, rank, choice) with probabilities, never free text. About 230 ms p50, about $0.04 per 1M input tokens, output free, 32,000 token context.
+Known limits from community reports: calibration can be bad on chance-like inputs (fair die: 82.9% stated on a face with 19.0% accuracy); stated probabilities are sensitive to option labels and rubric wording; it falsely accepted fabricated law in one UK legal RAG test; weak on Arabic dialects and missing context; batching 40 rows per request breaks ranking that 1 row per request passes; on IMDb it beat classic ML but lost on the other 7 datasets in one test.
+ALREADY WIDELY DISCUSSED (do NOT propose these): agent/tool-call safety gating, support ticket and email triage, bulk labeling, games and Doom/Tetris loops, RAG reranking, model routing, content moderation, agent done-verification, computer-use agents, citation checking, prompt-injection screening, context compaction, CI code linting, security log triage, lead scoring, entity resolution, fraud screening, resume screening, contract review, sentiment scoring.
+YOUR ANGLE: industries and domains that appear in ZERO of 27 pages read: healthcare admin and clinical-adjacent triage, education and grading feedback, government/public-sector casework, manufacturing and supply chain, procurement, translation/localization QA, UX research and interview coding, accounting/bookkeeping, agriculture, energy, logistics, libraries/archives.
+TASK: Propose 5 candidate use cases. For each: the concrete decision Jev makes, the input and output type, why Jev's properties fit (speed, cost, probabilities), the main failure risk given the limits above, and one validation test. Then use WebSearch to check, for each candidate, whether anyone has already built or written about it (report URLs found, or 'none found' with the queries you tried). Mark novelty as high/medium/low on that evidence. Under 700 words. Do not invent facts or URLs.</code></pre></details>
+</div>
+<div class="agent">
+<h4>Agent 2.2: Ideate: architectural roles inside other systems</h4>
+<div class="agentmeta">Call label: <code>Ideation: architectural roles</code> &middot; 10 tool uses &middot; 83,916 tokens &middot; 69 s</div>
+<p><b>Why this agent.</b> The first ideator changes the domain. This one changes the position of Jev in a system: Jev as a part inside an algorithm instead of an assistant that answers a user.</p>
+<p><b>What the prompt does.</b> It repeats the facts and limits, and a second "do not propose" block lists niche builds that the community agent found. The angle lists ten example roles, with the instruction "do not just copy them".</p>
+<p><b>What came back.</b> Five candidates: Jev as the comparator in a merge sort; as the failure predicate in delta debugging; as a sampled production assertion; as a surrogate labeler for A/B pre-screening; as a verifier for semantic-cache hits. It rated none as high novelty. Its best was delta debugging (medium).</p>
+<p><b>Limits.</b> It ran only one Jev-specific search, so its ratings rest on prior art for language models in general. Four of its five candidates match my example roles, and the cache verifier does not. It did not search for evolutionary critics, distillation teachers, or consensus tie-breakers, although my brief listed them.</p>
+<p><b>How I used it.</b> Delta debugging is rank 2 in the rejected list of run 1. The other four lost on novelty: each has published prior art.</p>
+<details open><summary>Exact prompt for agent 2.2</summary><pre><code>Context: "Jev" = TypeSafe AI's System One decision model (launched 15 Sep 2026). It returns a typed answer (label, yes/no, score, rank, choice) with probabilities, never free text. About 230 ms p50, about $0.04 per 1M input tokens, output free, 32,000 token context.
+Known limits from community reports: calibration can be bad on chance-like inputs (fair die: 82.9% stated on a face with 19.0% accuracy); stated probabilities are sensitive to option labels and rubric wording; falsely accepted fabricated law in one legal RAG test; batching 40 rows per request broke ranking that 1 row per request passed; on 8 classification datasets it beat classic ML only on IMDb.
+ALREADY WIDELY DISCUSSED (do NOT propose): agent/tool-call safety gating, ticket/email triage, bulk labeling, Doom/Tetris loops, RAG reranking, model routing, moderation, agent done-verification, computer-use, citation checking, injection screening, context compaction, CI linting, log triage, lead scoring, entity resolution, fraud, resume screening, contract review, sentiment.
+Already built but niche (also do NOT propose): Jev as SQL token decoder, Jev as DuckDB/Postgres function, persona-reaction simulation (Jevtown), YouTube sponsor-segment detection, paper triage radar, network IDS per flow.
+YOUR ANGLE: new ARCHITECTURAL ROLES for Jev inside other systems, where Jev is a component and not an assistant. Examples of the kind of thing to think about (do not just copy them): Jev as a learned comparator in sorting/search algorithms, as a cheap oracle for property-based testing of fuzzy specs, as the 'critic' step inside evolutionary/genetic search, as a distillation teacher that labels data to train a tiny local model, as an A/B-test pre-screener, as a runtime assertion ('semantic assert') in production code, as a sensor-to-event converter in streaming pipelines, as the judge in eval harnesses for other LLMs, as a differential-privacy-friendly labeler, as a tie-breaker in consensus among agents.
+TASK: Propose 5 candidates. For each: the decision, the input/output, why Jev's speed/cost/probabilities fit, the main failure risk given the limits, and one validation test. Then use WebSearch to check whether each has already been built or written about (report URLs, or 'none found' plus queries). Rate novelty high/medium/low on that evidence. Under 700 words. Do not invent facts or URLs.</code></pre></details>
+</div>
+<div class="agent">
+<h4>Agent 2.3: Ideate: personal, science, and civic uses</h4>
+<div class="agentmeta">Call label: <code>Ideation: personal and civic</code> &middot; 8 tool uses &middot; 80,715 tokens &middot; 58 s</div>
+<p><b>Why this agent.</b> The earlier agents leaned toward software and business. This angle looks at people who are not companies: hobbyists, scientists, archivists, journalists, volunteers.</p>
+<p><b>What the prompt does.</b> The angle is a list of about fifteen ideas. One of them (genealogy matching) came from a Hacker News comment in the community agent's report. The task says "pick the ones with the best mix of real need and fit", which gives the agent permission to choose among them.</p>
+<p><b>What came back.</b> Five candidates: a check of a paper's claim against its table; a newsworthiness score for FOIA records; genealogy same-person matching; adjudication of volunteer transcriptions of museum labels; and a stale-note checker for a personal notes vault. It rated volunteer-transcription adjudication as high novelty.</p>
+<p><b>Limits.</b> It opened no page; it read titles and summaries from search. In its report, "built" means "a page that does this was found". The high rating for the transcription idea rests on two search queries, and the agent said so.</p>
+<p><b>How I used it.</b> All five went into the rejected list. Genealogy overlaps entity resolution, which is saturated, and the transcription idea carries its weak-evidence warning there.</p>
+<details open><summary>Exact prompt for agent 2.3</summary><pre><code>Context: "Jev" = TypeSafe AI's System One decision model (launched 15 Sep 2026). It returns a typed answer (label, yes/no, score, rank, choice) with probabilities, never free text. About 230 ms p50, about $0.04 per 1M input tokens, output free, 32,000 token context.
+Known limits from community reports: calibration can be bad on chance-like inputs; probabilities are sensitive to option labels and rubric wording; weak on Arabic dialects and missing context; falsely accepted fabricated law in one legal test; 40-row batches break ranking.
+ALREADY WIDELY DISCUSSED (do NOT propose): agent safety gating, ticket/email triage, bulk labeling, Doom/Tetris, RAG reranking, model routing, moderation, agent done-verification, computer-use, citation checking, injection screening, context compaction, CI linting, log triage, lead scoring, entity resolution, fraud, resume screening, contract review, sentiment.
+Already built, niche (do NOT propose): YouTube sponsor-skip, plot-spoiler comment filter, paper triage radar, persona reaction simulation, SQL decoder, Home Assistant sensors, IRS form classifier, Pokemon-playing.
+YOUR ANGLE: individuals, hobbies, science, civic and cultural uses. Think: genealogy record matching (suggested on Hacker News, no build found), citizen science image/tag review, accessibility (alt-text sufficiency checks, reading-level gating, captions quality), archive and museum cataloguing, open-data journalism (flagging which records in a FOIA dump matter), personal knowledge management (note-to-note relatedness, 'is this note stale'), wildlife camera or birdsong triage, music/DJ set selection, legal-aid intake, tenant/consumer rights checks, community moderation of local forums, wikis (edit patrol, citation-needed detection), open-source maintainers (issue duplicate detection, PR-template compliance), scientific peer-review checklists, replication-crisis checks (does the paper's claim match its table).
+TASK: Propose 5 candidates (pick the ones with the best mix of real need and fit with Jev's properties). For each: the decision, input/output, why Jev fits, main failure risk given the limits, one validation test. Then use WebSearch to check whether each is already built or written about (report URLs, or 'none found' plus queries). Rate novelty high/medium/low on that evidence. Under 700 words. Do not invent facts or URLs.</code></pre></details>
+</div>
+<div class="agent">
+<h4>Agent 2.4: Ideate: uses that depend on the probability output</h4>
+<div class="agentmeta">Call label: <code>Ideation: probability as product</code> &middot; 20 tool uses &middot; 100,468 tokens &middot; 118 s</div>
+<p><b>Why this agent.</b> This is the angle that turns the stage-1 failure reports into material. If the probabilities are unreliable and the wording changes them, a measurement of that behavior might itself be useful.</p>
+<p><b>What the prompt does.</b> It is the only ideator prompt that puts the numbers of the failure reports in front (55% became 95.9%, 45% became 6.6%). The angle says "AND the limits above", so the limits are part of the requirement. The task adds a pass/fail threshold to each validation test.</p>
+<p><b>What came back.</b> Five candidates: a clause-ambiguity index (the spread of answers under reworded questions); a phrase-level leakage probe; an all-pairs contradiction scan of a policy corpus; a label-noise audit with a stability gate; and a difficulty stratifier. It proposed one shared design for all five: run every item in both option orders and under several wordings, and use differences and flip rates, not absolute probabilities. It cited a community audit with a first-listed option bias of 0.37, and a GitHub issue reporting a 47% flip rate and a 64% to 67% second-position bias for Jev as a pairwise judge. It dropped drift monitoring because three tools already exist.</p>
+<p><b>Limits.</b> The 47% flip figure comes from an issue on a different project, and I did not verify it. The agent read search excerpts and opened no paper in full.</p>
+<p><b>How I used it.</b> This agent produced both the winner of run 1 (the contradiction scan, with its both-orders agreement gate) and the runner-up (the ambiguity index). The other three rank in the middle and lower part of the rejected list.</p>
+<details open><summary>Exact prompt for agent 2.4</summary><pre><code>Context: "Jev" = TypeSafe AI's System One decision model (launched 15 Sep 2026). It returns a typed answer plus probabilities, never free text. About 230 ms p50, about $0.04 per 1M input tokens, output free, 32,000 token context.
+Known limits from community reports: probabilities are NOT reliably calibrated (fair die: 82.9% stated on one face with 19.0% accuracy; a stated 55% risk became 95.9% output while a stated 45% became 6.6%); sensitive to label and rubric wording; it can emit a wrong but valid value with high confidence; one report says calibration holds near the training distribution and fails on pure-chance inputs; calibration helpers exist (jevcal, Tenbin, jev-trust) with few stars.
+ALREADY WIDELY DISCUSSED (do NOT propose): agent safety gating, ticket/email triage, bulk labeling, games, RAG reranking, model routing, moderation, agent done-verification, computer-use, citation checking, injection screening, context compaction, CI linting, log triage, lead scoring, entity resolution, fraud, resume screening, contract review, sentiment.
+Already built, niche (do NOT propose): persona reaction simulation, SQL decoder, SQL ORDER BY, sponsor-skip, IDS per flow, paper radar.
+YOUR ANGLE: use cases that EXPLOIT or DEPEND ON a property the listicles ignore: the output is cheap, typed, repeatable and carries a probability vector, AND the limits above. Think about: Jev as a measuring instrument (inter-rater agreement studies, measuring ambiguity in a corpus by finding items where Jev's distribution is flat, using wording-sensitivity itself as a signal for ambiguous policy text or ambiguous legal clauses), disagreement between Jev and an LLM as an anomaly detector, using repeated cheap queries with perturbed labels as an ensemble to build your own calibration, label-noise auditing of existing datasets, finding contradictions in a policy corpus by asking the same question of every pair, 'counterfactual probes' that vary one phrase in a document and measure the probability shift (a bias or leakage audit), content-quality drift monitoring over time, red-teaming other classifiers.
+TASK: Propose 5 candidates. For each: the decision/measurement, input/output, why Jev fits, how the known limits are handled or turned into the signal, one validation test with a pass/fail threshold. Then use WebSearch to check whether each is already built or written about (report URLs, or 'none found' plus queries). Rate novelty high/medium/low on that evidence. Under 700 words. Do not invent facts or URLs.</code></pre></details>
+</div>
+<h3>Run 2, stage 1: map the list (4 agents)</h3>
+<div class="agent">
+<h4>Agent 3.1: Map: agent decisions, guardrails, calibration</h4>
+<div class="agentmeta">Call label: <code>Map agent/guardrail/calibration entries</code> &middot; 4 tool uses &middot; 93,191 tokens &middot; 55 s</div>
+<p><b>Why this agent.</b> After you replaced the evidence base, the list had about 550 entries and one 231 KB README. The size made it unsuitable for one agent. I cut it by category file into four slices of about the same size and gave each slice to one agent. The slicing is the main design choice of stage 1 in run 2.</p>
+<p><b>What the prompt does.</b> It restates the rule (two sources only, no web search, ignore earlier research) and gives the blog facts, so the agent can judge "expected but absent". It asks for patterns with counts, saturation, raw gaps, and unusual entries. The words "raw gaps (do not judge them yet)" keep the mapping step apart from the idea step.</p>
+<p><b>What came back.</b> About 156 entries by its hand tally (60, 47, and 49). Saturated patterns: GUI and browser action selection (about 19), pre-execution tool-call gates (about 18), code review with plain-English rules (about 13), open and local Jev replicas (about 33). Thin patterns: wake gating, RAG answer withholding, URL gating. Gaps: wikiracing and map-reduce (the blog names both), business workflow routing, retry and backoff, multi-agent consensus, threshold-selection studies. Unusual entries: a conversational agent with no language model, a calculator with no arithmetic, a 706,048-parameter specialist that scored 99.7% against Jev's 83.6% on form filling, and an open model that completed 38.5% of web tasks against 16.7% for Jev 1.13.</p>
+<p><b>Limits.</b> The counts are hand tallies and can be off by one or two, because some entries fit two patterns.</p>
+<p><b>How I used it.</b> The two comparisons against specialists (99.7% to 83.6%, and 38.5% to 16.7%) went into every ideator prompt as "documented limits". The gap list fed the angles of the ideators.</p>
+<details open><summary>Exact prompt for agent 3.1</summary><pre><code>You map what an awesome-list already covers. Evidence base is ONLY two sources: (1) the TypeSafe AI launch blog https://typesafe.ai/blog/introducing-system-one-models-and-jev and (2) the awesome-jev list https://github.com/yibie/awesome-jev. Local copy of the list: [local scratchpad folder]\awesome\ (README.md is the aggregate, 231 KB; categories\*.md are the parts). Use Read/Grep on those files. Do not use web search. Ignore any earlier research you may have seen.
+Blog facts: Jev takes unstructured state plus a typed question and returns a typed value (choice up to 255 options, score, boolean) with calibrated probabilities and confidence. No free-text output. 70ms-500ms end to end. $0.042 per MTok input, output free. All outputs generated in parallel. Blog named examples: Doom gameplay, wikiracing, workflow routing, map-reduce over large datasets, LLM output verification/guardrailing.
+YOUR SLICE: categories\agent-decisions.md, categories\verification-guardrails.md, categories\calibration-research.md. Read all three fully.
+OUTPUT (under 700 words): (1) the distinct decision PATTERNS in your slice, each with an entry count and 1-2 example entry names with URLs; (2) which patterns are saturated (5+ entries) and which have 1-2 entries; (3) decision types or workflow positions you EXPECT to see in these categories but do NOT, listed as raw gaps (do not judge them yet); (4) any entry that looks unusual or surprising, with URL. Quote entry text exactly when you cite it.</code></pre></details>
+</div>
+<div class="agent">
+<h4>Agent 3.2: Map: classification, scoring, moderation, labeling</h4>
+<div class="agentmeta">Call label: <code>Map classification/scoring/labeling entries</code> &middot; 5 tool uses &middot; 87,764 tokens &middot; 54 s</div>
+<p><b>Why this agent.</b> This slice holds the categories where most "ordinary" Jev uses live, so it is the best place to see which industries are absent.</p>
+<p><b>What the prompt does.</b> The output request differs from the first mapper in one place: it asks for INDUSTRIES and DOMAINS as well as patterns, and for data types as well as decision types in the gap list.</p>
+<p><b>What came back.</b> 115 entries (59, 38, 10, and 8 by file). Saturated: coding-agent model routing (about 13), retrieval and reranking (about 20), email and inbox triage, document classification. Thin: output guardrails (one entry), citation verification, text-to-SQL. Gaps: healthcare, finance, insurance claims, legal review, education, e-commerce categorization, manufacturing inspection, logistics, audio, video and image moderation, hate-speech moderation. Notable entries: a smart-meter anomaly triage with a large-scale claim written like marketing; a cost study that measured Jev at 6.6 to 12.7 times an LLM's token cost on its task; an extraction tool that is 10 to 26 times cheaper than another but scores F1 84.2 against 88.5; a bounding-box entry that is not a typed choice.</p>
+<p><b>Limits.</b> The agent searched only its own slice. A gap in its report can be filled elsewhere in the list.</p>
+<p><b>How I used it.</b> Its industry gaps are the base of the angle of ideator 4.1. The cost study went into the ideator prompts as a documented limit.</p>
+<details open><summary>Exact prompt for agent 3.2</summary><pre><code>You map what an awesome-list already covers. Evidence base is ONLY two sources: (1) the TypeSafe AI launch blog https://typesafe.ai/blog/introducing-system-one-models-and-jev and (2) the awesome-jev list https://github.com/yibie/awesome-jev. Local copy of the list: [local scratchpad folder]\awesome\ (README.md is the aggregate, 231 KB; categories\*.md are the parts). Use Read/Grep on those files. Do not use web search. Ignore any earlier research you may have seen.
+Blog facts: Jev takes unstructured state plus a typed question and returns a typed value (choice up to 255 options, score, boolean) with calibrated probabilities and confidence. No free-text output. 70ms-500ms end to end. $0.042 per MTok input, output free. All outputs generated in parallel. Blog named examples: Doom gameplay, wikiracing, workflow routing, map-reduce over large datasets, LLM output verification/guardrailing.
+YOUR SLICE: categories\classification-routing.md, categories\scoring-ranking.md, categories\content-moderation.md, categories\data-labeling-curation.md. Read all four fully.
+OUTPUT (under 700 words): (1) the distinct decision PATTERNS and the INDUSTRIES/DOMAINS in your slice, each with an entry count and 1-2 example entry names with URLs; (2) which are saturated (5+ entries) and which have 1-2 entries; (3) industries, data types, or decision types you EXPECT to see but do NOT, listed as raw gaps (do not judge them yet); (4) any entry that looks unusual or surprising, with URL. Quote entry text exactly when you cite it.</code></pre></details>
+</div>
+<div class="agent">
+<h4>Agent 3.3: Map: infrastructure, evaluation, adaptive UI</h4>
+<div class="agentmeta">Call label: <code>Map infra/eval/UI entries</code> &middot; 6 tool uses &middot; 93,169 tokens &middot; 56 s</div>
+<p><b>Why this agent.</b> The infrastructure file is the largest one (98 entries). It answers a different question from the other slices: which tools a builder can already plug Jev into, and which they cannot.</p>
+<p><b>What the prompt does.</b> It changes the unit of mapping from "decision pattern" to "kind of project". The gap request names integration targets, benchmark types, and UI decision types as examples, to steer the agent toward the questions a builder would ask.</p>
+<p><b>What came back.</b> 142 entries (97, 35, and 10). About 23 language SDKs, about 17 agent connectors, about 14 framework adapters, about 13 local runtimes, 5 database extensions. Gaps from a keyword search of the infrastructure file: no entry for n8n, Airflow, Kafka, dbt, Temporal, CrewAI, Redis, Elasticsearch, Qdrant, Cloudflare Workers, VS Code, Slack, Excel, or OpenTelemetry; no benchmark of latency under concurrent load, although the blog's claim of 70 ms to 500 ms is central; no adversarial or long-context benchmark. It also reported: "Jev Does Not Play Dice" (82.9% on a face at 19.0% accuracy).</p>
+<p><b>Limits.</b> Its keyword search said LangGraph had no entry. Another agent later found one (section 9, item 4). The agent itself noted that it searched only its slice.</p>
+<p><b>How I used it.</b> This report is the origin of the angle of ideator 4.2 (workflow engines, map-reduce, fan-out). I passed its keyword list to that ideator with the instruction "verify with your own grep".</p>
+<details open><summary>Exact prompt for agent 3.3</summary><pre><code>You map what an awesome-list already covers. Evidence base is ONLY two sources: (1) the TypeSafe AI launch blog https://typesafe.ai/blog/introducing-system-one-models-and-jev and (2) the awesome-jev list https://github.com/yibie/awesome-jev. Local copy of the list: [local scratchpad folder]\awesome\ (README.md is the aggregate, 231 KB; categories\*.md are the parts). Use Read/Grep on those files. Do not use web search. Ignore any earlier research you may have seen.
+Blog facts: Jev takes unstructured state plus a typed question and returns a typed value (choice up to 255 options, score, boolean) with calibrated probabilities and confidence. No free-text output. 70ms-500ms end to end. $0.042 per MTok input, output free. All outputs generated in parallel. Blog named examples: Doom gameplay, wikiracing, workflow routing, map-reduce over large datasets, LLM output verification/guardrailing.
+YOUR SLICE: categories\infra-sdks-integrations.md, categories\evaluation-benchmarking.md, categories\adaptive-realtime-ui.md. Read all three fully.
+OUTPUT (under 700 words): (1) the distinct kinds of project in your slice (SDK, gateway, plugin, benchmark, UI pattern...) and the decision pattern each serves, with entry counts and 1-2 example names with URLs; (2) saturated (5+ entries) versus 1-2 entries; (3) things you EXPECT to see but do NOT (for example integration targets, benchmark types, UI decision types), as raw gaps; (4) the most unusual entries with URL. Quote entry text exactly when you cite it.</code></pre></details>
+</div>
+<div class="agent">
+<h4>Agent 3.4: Map: games, physical systems, finance, compliance, discussions</h4>
+<div class="agentmeta">Call label: <code>Map games/physical/finance/discussions</code> &middot; 13 tool uses &middot; 106,596 tokens &middot; 200 s</div>
+<p><b>Why this agent.</b> This slice mixes small categories with the "related practices and discussions" file (96 entries), which holds X threads, Reddit posts, and interviews. Those are practice signals that may have no repository behind them.</p>
+<p><b>What the prompt does.</b> It gives the agent a second job on top of the mapping: to find signals in the discussions file that have no case page in any other category. That job needs a search of the other ten category files. The prompt also contains two numbers from my notes: "scientific-pipelines has 1 entry and compliance-legal has 3".</p>
+<p><b>What came back.</b> The agent corrected both numbers: scientific-pipelines has 0 entries and compliance-legal has 2. The extra count in each file was the template line inside a code block. It mapped 24 game entries, 9 robotics, 8 finance. It listed twelve practice signals with no case page, for example zsh history completion, a CAPTCHA arbitrage at $0.0068 per hundred, narrowing an icon set by phrase, and a 57.1% agent cost reduction. It confirmed that the blog's "map-reduce" and "workflow routing" have no entry anywhere in the list.</p>
+<p><b>Limits.</b> This was the slowest mapper (13 tool uses, 200 s) because of the cross-search of the other files.</p>
+<p><b>How I used it.</b> The twelve signals are the raw material of ideator 4.3. The correction of my two counts is item 4 in section 9.</p>
+<details open><summary>Exact prompt for agent 3.4</summary><pre><code>You map what an awesome-list already covers. Evidence base is ONLY two sources: (1) the TypeSafe AI launch blog https://typesafe.ai/blog/introducing-system-one-models-and-jev and (2) the awesome-jev list https://github.com/yibie/awesome-jev. Local copy of the list: [local scratchpad folder]\awesome\ (README.md is the aggregate, 231 KB; categories\*.md are the parts). Use Read/Grep on those files. Do not use web search. Ignore any earlier research you may have seen.
+Blog facts: Jev takes unstructured state plus a typed question and returns a typed value (choice up to 255 options, score, boolean) with calibrated probabilities and confidence. No free-text output. 70ms-500ms end to end. $0.042 per MTok input, output free. All outputs generated in parallel. Blog named examples: Doom gameplay, wikiracing, workflow routing, map-reduce over large datasets, LLM output verification/guardrailing.
+YOUR SLICE: categories\game-simulation.md, categories\robotics-physical.md, categories\finance-trading.md, categories\compliance-legal.md, categories\scientific-pipelines.md, categories\related-practices-discussions.md. Read all six fully.
+OUTPUT (under 800 words): (1) the distinct domains and decision patterns in your slice, each with entry counts and 1-2 example names with URLs; (2) saturated versus 1-2 entries; note that scientific-pipelines has 1 entry and compliance-legal has 3, and say what they are; (3) in related-practices-discussions, which practice signals (X threads, Reddit, interviews) describe uses that have NO standalone case page elsewhere in the list: these are the most valuable finds, list each with URL and the exact claim; (4) things you EXPECT to see but do NOT, as raw gaps. Quote entry text exactly when you cite it.</code></pre></details>
+</div>
+<h3>Run 2, stage 2: ideate (3 agents)</h3>
+<div class="agent">
+<h4>Agent 4.1: Ideate: empty and thin domains</h4>
+<div class="agentmeta">Call label: <code>Ideation: empty and thin domains</code> &middot; 9 tool uses &middot; 103,748 tokens &middot; 426 s</div>
+<p><b>Why this agent.</b> It is the run-2 counterpart of ideator 2.1: the domains that the three mappers reported as empty.</p>
+<p><b>What the prompt does.</b> The prompt differs from the run-1 ideators in two ways. It forbids web search, and it asks for the novelty check as a grep of the local README with at least three keywords per candidate. The "LIST GAPS found by mappers" block passes the mappers' reports to the ideator in condensed form.</p>
+<p><b>What came back.</b> Five candidates: insurance first-notice-of-loss routing; a clinical-trial eligibility pre-screen (a yes/no per criterion, run in parallel); short-answer rubric scoring; shipment-exception handling; product-taxonomy assignment. It dropped support-ticket routing and spam moderation, because the list has entries for both. It required a non-Jev baseline in every test (for example TF-IDF with logistic regression), citing the specialist that beat Jev 99.7% to 83.6%. It rated four as high novelty (zero hits for terms such as insurance, adjuster, clinical, patient, student, teacher, shipment).</p>
+<p><b>Limits.</b> It was the second-slowest agent (426 s). The medical evidence it cited is exam-based. It flagged rubric scoring as the riskiest idea because of a subjective-scoring test in the list where no model beat the label base rates.</p>
+<p><b>How I used it.</b> All five went into the rejected list of run 2. Insurance and shipment routing are new industries on a pattern the list already covers heavily (routing), and they rank 4 and 5.</p>
+<details open><summary>Exact prompt for agent 4.1</summary><pre><code>Evidence base is ONLY two sources: (1) TypeSafe AI blog https://typesafe.ai/blog/introducing-system-one-models-and-jev and (2) the awesome-jev list https://github.com/yibie/awesome-jev (local copy: [local scratchpad folder]\awesome\ ; README.md aggregates categories\*.md; use Grep/Read). No web search. Ignore any earlier research.
+Blog facts: Jev takes unstructured state plus a typed question; returns a typed value (choice up to 255 options, score, boolean) with calibrated probabilities and confidence; all outputs generated in parallel; no free text; 70ms-500ms end to end; $0.042 per MTok input, output free; blog calls 0% type error rate 'non-empirical'; blog's own caveats: needs a schema defined in advance, workflow evals were made by TypeSafe's own team. Blog-named uses: workflow routing, classification/scoring/extraction, map-reduce over large datasets, real-time apps, LLM output verification, Doom, wikiracing.
+List facts (already SATURATED, do NOT propose): coding-agent model routing, GUI/browser action selection, tool-call gating, code lint/review, retrieval reranking, email/inbox triage, compaction, done-gates, game-playing agents, open Jev replicas, SDKs, MCP servers, calibration audits. Documented limits in the list: a fair-die test gave 82.9% reported probability at 19.0% accuracy; a 706,048-parameter specialist beat Jev 99.7% to 83.6% on its home task; one cost study measured Jev at 6.6-12.7x an LLM's token cost on its task; WebJev open model beat Jev 38.5% to 16.7% on web tasks.
+LIST GAPS found by mappers: scientific-pipelines category has 0 entries; compliance-legal has 2 (motion-to-dismiss forecasting, YAML policy engine); no healthcare/clinical triage, insurance claims, education grading, manufacturing inspection, logistics, energy beyond 1 smart-meter entry, customer-support desks, e-commerce categorization, audio/voice, video or image moderation; no hate-speech/harassment/misinformation moderation; output-side LLM guardrails have 1 entry; robotics has no real-hardware results.
+YOUR ANGLE: pick the 5 best candidate use cases in these gap domains, favouring ones where Jev's actual properties (typed output, probabilities, parallel fan-out, cost) fit and where the documented limits can be handled. For each: the decision, input and output types, why Jev fits, the main failure risk using the limits above, and one validation test with a pass/fail threshold. Then CHECK NOVELTY by grepping the local list (README.md) for at least 3 keywords per candidate; report the keywords and any matching entries with URL. Rate novelty high/medium/low from that evidence alone. Under 700 words. Do not invent facts or URLs.</code></pre></details>
+</div>
+<div class="agent">
+<h4>Agent 4.2: Ideate: exploit the blog&#x27;s stated properties</h4>
+<div class="agentmeta">Call label: <code>Ideation: exploit blog properties</code> &middot; 16 tool uses &middot; 106,712 tokens &middot; 450 s</div>
+<p><b>Why this agent.</b> The blog names map-reduce over large datasets, thousands of choices per step, and real-time use. The list has almost nothing for the first. This agent starts from the blog's claims and asks what a builder could do with them.</p>
+<p><b>What the prompt does.</b> It requires the cost arithmetic to be shown for each candidate, at $0.042 per MTok, and it ends the gap list with "verify with your own grep". That instruction matters: the mapper's keyword search (agent 3.3) was one of the things being checked.</p>
+<p><b>What came back.</b> Five candidates with costs: entity resolution with one 101-way choice per record ($1,722 for 10 million records, against $5,040 for pairwise questions); root-cause hop navigation on a service graph ($0.0052 per incident); <b>dead-letter-queue triage with a replay contract</b> ($44.10 for one million messages at 1,050 tokens each); a typed branch node in Airflow or Temporal ($294 per month); and material-change classification of page versions ($71.40 per day). It found that the list does contain a LangGraph entry (<code>typesafe-jev-workflow</code>), which corrects the mapper and my brief. It confirmed zero hits for Kafka, dead letter, DLQ, poison message, and the other terms.</p>
+<p><b>Limits.</b> The token counts per call are the agent's own assumptions. The 450 s duration is the longest of all 14 agents. The agent labeled its tests as its own design.</p>
+<p><b>How I used it.</b> The winner of run 2 came from this agent. I re-ran the cost arithmetic and one grep of my own before I accepted it (section 11).</p>
+<details open><summary>Exact prompt for agent 4.2</summary><pre><code>Evidence base is ONLY two sources: (1) TypeSafe AI blog https://typesafe.ai/blog/introducing-system-one-models-and-jev and (2) the awesome-jev list https://github.com/yibie/awesome-jev (local copy: [local scratchpad folder]\awesome\ ; README.md aggregates categories\*.md; use Grep/Read). No web search. Ignore any earlier research.
+Blog facts: Jev takes unstructured state plus a typed question; returns a typed value (choice up to 255 options, score, boolean) with calibrated probabilities and confidence; all outputs generated in parallel; no free text; 70ms-500ms end to end vs 3 to 329 seconds for frontier LLMs; $0.042 per MTok input, output free; Doom estimated at about $7/hour for 10 queries/second; wikiracing with hundreds to thousands of choices per step; blog says 193.6x faster and 444.6x cheaper on its own workflow evals ('higher end of real world gains'); blog-named uses: workflow routing, classification/scoring/extraction, MAP-REDUCE OVER LARGE DATASETS, real-time apps, LLM output verification. The list has NO entry for map-reduce, and no integration with n8n, Airflow, Kafka, dbt, Temporal, LangGraph, CrewAI, Redis, Elasticsearch, Qdrant, Cloudflare Workers, VS Code, Slack, Excel/Sheets, OpenTelemetry (mapper keyword search of the infra file; verify with your own grep). No latency-under-concurrent-load benchmark, no adversarial robustness benchmark, no long-context benchmark.
+Already SATURATED in the list (do NOT propose): coding-agent routing, GUI action selection, tool-call gating, code lint, reranking, email triage, compaction, done-gates, game agents, SDKs, MCP servers, calibration audits, semantic grep CLIs, DB extensions for semantic filtering (pg-jev, duckdb-jev, grev).
+Documented limits: fair-die 82.9% stated vs 19.0% accuracy; specialist small models beat Jev on home tasks; one cost study found Jev 6.6-12.7x an LLM's token cost on its task; parallel-output design means no chain-of-thought.
+YOUR ANGLE: ideas that exploit the properties the blog stresses and the list under-uses: huge fan-out (one cheap call per item over millions of items, so output-free pricing matters), 255-way choice with thousands of candidates per step (generalising wikiracing beyond games: e.g. navigation or search over any graph), real-time sub-500ms decisions in a streaming pipeline, and typed output as a contract inside workflow engines. Propose 5 candidates. For each: the decision, input/output types, back-of-envelope cost using $0.042/MTok (show the arithmetic), why Jev fits, main failure risk using the limits, one validation test with pass/fail threshold. Then CHECK NOVELTY by grepping the local list for at least 3 keywords per candidate; report keywords and any matching entries with URL. Rate novelty high/medium/low from that evidence alone. Under 700 words. Do not invent facts or URLs.</code></pre></details>
+</div>
+<div class="agent">
+<h4>Agent 4.3: Ideate: transfer a working pattern to a new domain</h4>
+<div class="agentmeta">Call label: <code>Ideation: transfer from odd entries</code> &middot; 20 tool uses &middot; 115,809 tokens &middot; 335 s</div>
+<p><b>Why this agent.</b> The strangest entries in the list show working patterns in narrow settings. This agent looks for one pattern that could move to another setting. It works from what real builders chose to make.</p>
+<p><b>What the prompt does.</b> It lists about twenty odd entries from the mappers' reports and tells the agent to read the full text in the local list. It defines the move to make with three examples, and requires the source pattern to be named with its entry URL.</p>
+<p><b>What came back.</b> Five candidates: next-file prefetch from a recent-files list (from the zsh pattern); a local head for a voice end-of-turn decision (from stuntd); a <b>questionnaire pretest with synthetic respondents</b> (from the synthetic-survey entry); a hazard-log risk map (from SemanticSpace); and hierarchical code assignment, one choice per tree level (from Jev Prime). It rated the questionnaire pretest and the prefetch as high novelty.</p>
+<p><b>Limits.</b> Every pass/fail threshold is the agent's proposal. It did not read two long lines in the evaluation file that matched "matrix" and "plot" for the hazard-log idea, and said so. Next-file prefetch is probably beaten by a plain recency rule, since a small specialist beat Jev 99.7% to 83.6% on its home task.</p>
+<p><b>How I used it.</b> Its questionnaire pretest is the runner-up of run 2. It uses the wording sensitivity of Jev as the measurement. That rests on one list entry whose repository I did not open.</p>
+<details open><summary>Exact prompt for agent 4.3</summary><pre><code>Evidence base is ONLY two sources: (1) TypeSafe AI blog https://typesafe.ai/blog/introducing-system-one-models-and-jev and (2) the awesome-jev list https://github.com/yibie/awesome-jev (local copy: [local scratchpad folder]\awesome\ ; README.md aggregates categories\*.md; use Grep/Read). No web search. Ignore any earlier research.
+Blog facts: Jev takes unstructured state plus a typed question; returns a typed value (choice up to 255 options, score, boolean) with calibrated probabilities; parallel outputs; no free text; 70ms-500ms; $0.042 per MTok input, output free.
+Already SATURATED in the list (do NOT propose): coding-agent routing, GUI action selection, tool-call gating, code lint, reranking, email triage, compaction, done-gates, game agents, SDKs, MCP servers, calibration audits, semantic grep/DB filters.
+Documented limits: fair-die 82.9% stated vs 19.0% accuracy; a 706,048-parameter specialist beat Jev 99.7% to 83.6% on form-filling; WebJev open model beat Jev 38.5% to 16.7%; Jev cost 6.6-12.7x an LLM's tokens on one task.
+ODD ENTRIES found by mappers (read each in the local list, grep for the URL or name to get the full text): Jev Prime 'a conversational agent with no language model, where every word is picked from ~4,700 options'; Jev calculator; jevcrypto; stuntd 'learns each decision site from upstream Jev answers, then answers locally and demotes itself on drift'; SemanticSpace (Jev scores as 2D coordinates); jev-synthetic-survey (Jev and GPT-4.1 answering as 300 synthetic respondents); Jevtown (10,000 personas); zsh history completion (picks next command from last 100 history entries, shown greyed out); CAPTCHA solving at $0.0068 per hundred vs a cent each; designer narrowing a large icon set by phrase; Jev deciding which leads deserve a video before HeyGen renders; Halv cut agent cost 57.1%; Stagehand+Jev sending the accessibility tree as state; Mac app routing setup questions to Jev when no language model is loaded; Jev playing Minecraft and poker; jev-canvas voice/webcam drawing; Qualm screen-reading wellbeing app; JevBystander (reads WeChat chats, shows exactly three toasts).
+YOUR ANGLE: CROSS-DOMAIN TRANSFER. Look for decision patterns inside those odd entries that work in one narrow setting and have not been applied to a different domain in the list. Examples of the move: 'pick next item from a short history' (zsh) applied to another history-shaped domain; 'distil a decision site into a local model and demote on drift' (stuntd) applied to a new workflow; 'synthetic respondent panel' applied to a new measurement. Propose 5 candidates. For each: name the source pattern with its entry URL, the new domain, the decision, input/output types, why Jev fits, main failure risk using the limits, one validation test with pass/fail threshold. Then CHECK NOVELTY by grepping the local list for at least 3 keywords per candidate; report keywords and any matching entries with URL. Rate novelty high/medium/low from that evidence alone. Under 700 words. Do not invent facts or URLs.</code></pre></details>
+</div>
+<h3>What the 14 prompts have in common</h3>
+<p>Every prompt has the same parts, in nearly the same order.</p>
+<ol>
+  <li><b>Context.</b> What Jev is, with the numbers that matter. Run 1 gives search-snippet numbers. Run 2 gives the blog's numbers.</li>
+  <li><b>Known limits.</b> The failure reports from earlier agents or from the list.</li>
+  <li><b>A "do not propose" list.</b> The saturated categories found by the coverage work. Ideators in run 1 get two such lists (widely discussed, and already built but niche).</li>
+  <li><b>One angle.</b> The only part that differs in a large way between agents of the same stage.</li>
+  <li><b>The task and the output shape.</b> A fixed list of what to report for each candidate, and a word cap of 700 or 800.</li>
+  <li><b>An evidence rule.</b> "Do not invent facts or URLs", or "Quote entry text exactly".</li>
+</ol>
+<p>The two runs differ in how the novelty check works. In run 1 each ideator searches the web. In run 2 web search is off, and each ideator greps the local copy of the list with at least three keywords per candidate. The skill's third evaluation view ("what other publications are covering") is therefore a web search in run 1 and a grep in run 2.</p>
+
+<h2>6. How the agents communicated, and where they did not</h2>
+
+<div class="box">
+  <p><b>Short answer.</b> Every piece of information moved through me, the parent session, and no agent sent a message to another agent. Each agent received one prompt when it started and returned one final report when it finished. Agents in the same stage ran in parallel and did not know that the others existed. Between stages, I chose which findings to pass on, and I rewrote them in my own words.</p>
+</div>
+
+<h3>6.1 The channels, and which ones were used</h3>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Channel</th><th>Used?</th><th>Evidence</th></tr></thead>
+  <tbody>
+    <tr><td>Parent to agent: the launch prompt</td><td>Used, once per agent</td><td>14 launches. The exact prompts are in section 5.</td></tr>
+    <tr><td>Agent to parent: the final report</td><td>Used, once per agent</td><td>Each report arrived as one task-completion notice.</td></tr>
+    <tr><td>Parent to a running agent (<code>SendMessage</code>, a follow-up question)</td><td>Not used</td><td>I made no <code>SendMessage</code> call. I resumed no agent. Each agent finished on its first run.</td></tr>
+    <tr><td>Agent to agent, direct message</td><td>Not used</td><td>I gave no agent the name or ID of another agent. The transcripts that survive show no <code>Agent</code> or <code>SendMessage</code> call (see 6.2).</td></tr>
+    <tr><td>Agent starts child agents</td><td>Not used (3 of 14 verified)</td><td>The three readable transcripts contain no <code>Agent</code> call. For the other 11, see 6.2.</td></tr>
+    <tr><td>Shared files</td><td>Read-only, run 2 only</td><td>All seven run-2 agents read one local copy of the awesome-jev files. The one readable run-2 transcript (agent 4.2) shows only <code>Glob</code>, <code>Bash</code>, and <code>Grep</code> calls on that folder. I gave the run-1 agents no shared files.</td></tr>
+    <tr><td>Agent to user, or user to agent</td><td>Not used</td><td>You saw only my messages. Your instructions reached the agents only through my prompts.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>6.2 What I could and could not verify</h3>
+<p>I parsed the saved transcripts of the 14 agents and counted tool calls by name, without reading their content into this session. Three transcripts exist and parse: agent 1.2 (<code>ToolSearch</code> 1, <code>WebFetch</code> 30, <code>WebSearch</code> 7, total 38), agent 2.1 (<code>ToolSearch</code> 1, <code>WebSearch</code> 18, total 19), and agent 4.2 (<code>Glob</code> 1, <code>Bash</code> 12, <code>Grep</code> 3, total 16). Each total equals the tool-use count in that agent's completion notice. None of the three contains an <code>Agent</code>, <code>SendMessage</code>, <code>Write</code>, <code>Edit</code>, or <code>NotebookEdit</code> call.</p>
+<p>The other 11 transcript files are 0 bytes on disk. I do not know why. For those 11 agents my statement of independence rests on three facts: their reports describe only their own searching and reading, and I never sent them a message. It does not rest on a check of what they did, so a hidden call cannot be excluded by this evidence.</p>
+
+<h3>6.3 What the agents knew about each other</h3>
+<p>Stage 1 agents of both runs knew nothing about the others. They received a topic description (run 1) or a slice assignment (run 2). Stage 2 agents knew only what I put in their prompts. The table shows what I passed from stage 1 to each stage 2 agent, and what I left out. "Condensed" means that I shortened the agent's finding to a phrase or a number and dropped its counts and sources.</p>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Receiving agent</th><th>Passed from stage 1 (condensed by me)</th><th>Not passed</th></tr></thead>
+  <tbody>
+    <tr><td>2.1 uncovered domains</td><td>From 1.2: the saturated categories as a name list, and the zero-coverage domains (as its angle). From 1.3: six failure facts (fair die, label sensitivity, UK legal RAG, Arabic dialects, 40-row batching, IMDb).</td><td>All of 1.1. The "niche builds" list of 1.3. The category counts of 1.2.</td></tr>
+    <tr><td>2.2 architectural roles</td><td>From 1.2: the saturated list. From 1.3: five failure facts and the niche builds list.</td><td>All of 1.1.</td></tr>
+    <tr><td>2.3 personal and civic</td><td>From 1.2: the saturated list. From 1.3: failure facts, the niche builds list, and a genealogy idea from a Hacker News comment.</td><td>All of 1.1.</td></tr>
+    <tr><td>2.4 probability as product</td><td>From 1.3: the probability numbers (55% became 95.9%, 45% became 6.6%), the claim that calibration fails on chance-like inputs, and the names of three calibration tools. From 1.2: the saturated list.</td><td>All of 1.1.</td></tr>
+    <tr><td>4.1 empty and thin domains</td><td>From my own fetch of the blog: the blog facts. From 3.1, 3.2, 3.3: the saturated list and four limits. From 3.4: the corrected counts (0 and 2) and the gap list.</td><td>The practice signals of 3.4. The integration-target gaps of 3.3.</td></tr>
+    <tr><td>4.2 blog properties</td><td>From the blog: the speed, cost, and cardinality claims. From 3.3: the list of absent integration targets and benchmark types, with the instruction to check it by grep. From 3.4: the absence of map-reduce.</td><td>The domain gaps of 3.2. The practice signals of 3.4.</td></tr>
+    <tr><td>4.3 cross-domain transfer</td><td>From 3.1, 3.2, 3.3, 3.4: about twenty "odd entries", some quoted exactly and some paraphrased by me. From 3.1 to 3.3: the documented limits.</td><td>Most of the saturation counts.</td></tr>
+  </tbody>
+</table>
+</div>
+<p>Three facts follow from the table.</p>
+<ol>
+  <li><b>The stages overlapped in run 1.</b> I started the four run-1 ideators when agents 1.2 and 1.3 had reported and agent 1.1 was still running. The report of agent 1.1 therefore reached no ideator. It reached me and, through my messages, you. In run 2 all four mappers had reported before I started the ideators.</li>
+  <li><b>The ideators did not see each other.</b> In run 1 the four ideators did not see one another's candidates, and in run 2 the three ideators did not either.</li>
+  <li><b>Duplicates.</b> I noticed no candidate that two agents proposed independently, but I did not run a systematic comparison.</li>
+</ol>
+
+<h3>6.4 Errors that the pass-through changed</h3>
+<ul>
+  <li><b>An error that spread.</b> I gave the four run-1 ideators a single limit of 32,000 tokens of context. Agent 1.1 reported two limits: 64k for the state plus all questions, and 32k for the state plus the longest single question. Agent 1.1 finished after I had started the ideators, so the correction could not reach them. Ideator 2.1 noticed the mismatch on its own, from a search snippet that listed 64k.</li>
+  <li><b>An error that was caught.</b> Mapper 3.3 reported that the list had no LangGraph entry. I passed that claim to ideator 4.2 with the words "verify with your own grep". The ideator found the entry and corrected it.</li>
+  <li><b>An error corrected before passing.</b> Mapper 3.4 corrected my counts for scientific-pipelines (0, not 1) and compliance-legal (2, not 3). I passed the corrected numbers to ideator 4.1.</li>
+</ul>
+
+<h2>7. How I chose the agents and the number</h2>
+
+<div class="box">
+  <p><b>Short answer.</b> The numbers 3, 4, 4, and 3 were judgments that I made while writing the tool calls, and I have no record of a calculation. This section is a reconstruction from what the transcript shows: my messages, my tool calls, and the prompts. I cannot observe my own selection process any further than that. I tested no other count, so I cannot say that 7 agents per run was better than 2 or 14.</p>
+</div>
+
+<h3>7.1 What the skill decided and what I decided</h3>
+<p>The skill states no count, no team, and no role. It ends with "You may delegate. Organize the work as you think is best", and its procedure says "Decide yourself how many subagents to start". Everything below was therefore my choice: the use of the Agent tool, the number of agents, the number of stages, the angle of each agent, the labels, and the choice to judge in the parent.</p>
+
+<h3>7.2 Things in my context that may have anchored the numbers</h3>
+<ul>
+  <li><b>The skill text.</b> It cites Mollick's example of a model that started 3 agents without a team sketch.</li>
+  <li><b>Your handoff file.</b> In my first turn I read <code>HANDOFF.md</code>. It records Mollick's counts: 3 agents without a team sketch and 13 with a three-team sketch.</li>
+  <li><b>Tool descriptions.</b> The Agent tool description says to launch independent agents in one message. The Workflow tool description gives a guideline of fewer than 10 agents per workflow. I did not use the Workflow tool, because you had not asked for one. I cannot rule out that the guideline shaped my sense of scale.</li>
+</ul>
+<p>I cannot separate these influences from my own judgment of the task.</p>
+
+<h3>7.3 Run 1: how the 3 and the 4 came about</h3>
+<ol>
+  <li><b>Whether to delegate.</b> I searched first, in the parent, only to learn what "jev" meant. Once I knew, I chose to delegate, because the work needed many pages read and several points of view. The alternative was to read everything in one context.</li>
+  <li><b>Three agents in stage 1.</b> I named three questions that need different sources: what Jev is (primary sources), what has been written about use cases (articles), and what people built (repositories and threads). I could not name a fourth distinct question. I did not use one agent, because one agent would mix primary and secondary sources and would have to count 20 or more pages. The second question is the third evaluation view of the skill ("what other publications are covering"), placed first.</li>
+  <li><b>Four agents in stage 2.</b> I chose four angles that did not overlap each other or the saturated list. The angles came from four sources: the zero-coverage domains of agent 1.2 (domains), my own reading of the product description (Jev as a component), the wording of your topic (personal and civic uses are less discussed), and the failure reports of agent 1.3 (probability as product). I stopped at four when new angles looked like subsets of these four, for example science, which I folded into the personal and civic angle. I started stage 2 when two of the three stage-1 reports were in. I recorded no reason for not waiting for the third.</li>
+  <li><b>The reader view stayed in the parent.</b> I judged this view myself. I wrote down no reason at the time. My untested reconstruction is that a reader view needs the finished candidates, and that a ranking needs all reports at once.</li>
+  <li><b>Cost.</b> Each agent used 80,000 to 115,000 tokens. I set no budget and made no cost comparison. Run 1 used 686,676 subagent tokens.</li>
+</ol>
+
+<h3>7.4 Run 2: how the 4 and the 3 came about</h3>
+<ol>
+  <li><b>Four mappers.</b> The list README is 231,420 bytes and the 16 category files total 167,674 bytes. I split the 16 category files by theme into four groups of 49,333; 36,647; 42,770; and 38,924 bytes. I aimed at roughly equal reading loads and at themes that belong together. I recorded no reason at the time for four groups instead of 16 or 2. Reasons that I can offer now, both untested: one agent per file would repeat the prompt overhead 16 times, and two agents would each read 80 KB or more, which risks skimming.</li>
+  <li><b>Three ideators.</b> The mappers' gap lists suggested three themes: domains the list lacks, properties that the blog stresses and the list under-uses, and odd entries whose patterns could move to a new domain. I wrote one angle for each. I created no fourth angle and wrote down no reason.</li>
+  <li><b>The shape of run 1 carried over.</b> You asked me to forget the earlier results. I discarded the facts, but the structure (gather, ideate, judge) came from run 1, which was still in my context. The two runs share a shape for that reason, as well as for the reason that the same skill prompt drove both. The equal total of 7 agents per run was not planned. I noticed it afterwards.</li>
+</ol>
+
+<h3>7.5 What this does not show</h3>
+<ul>
+  <li>It does not show how Claude chooses agent counts in general. It is one task, two runs, one model (Sonnet 5.5), and no repeat to measure variance.</li>
+  <li>It does not show that fewer agents would give a worse answer, because I ran no ablation.</li>
+  <li>The reasons in 7.3 and 7.4 that are marked as a reconstruction were written after the fact. The transcript shows the choices and the prompts, and it contains no recorded deliberation.</li>
+</ul>
+
+<h2>8. Tools and features used</h2>
+<table>
+  <thead><tr><th>Tool</th><th>What it did in this session</th></tr></thead>
+  <tbody>
+    <tr><td><code>Skill</code> (via <code>/swarm-brainstorm</code>, <code>/dev-journey</code>)</td><td>Loaded the prompt and the journey-document rules.</td></tr>
+    <tr><td><code>Agent</code> (<code>general-purpose</code>)</td><td>Started the 14 subagents, 3 or 4 per message so they ran in parallel.</td></tr>
+    <tr><td><code>ToolSearch</code></td><td>Loaded the schemas of <code>WebSearch</code> and <code>WebFetch</code>, which were deferred.</td></tr>
+    <tr><td><code>WebSearch</code>, <code>WebFetch</code></td><td>Identified Jev (run 1). Fetched the TypeSafe blog (run 2).</td></tr>
+    <tr><td><code>Bash</code> (<code>curl</code>, <code>python</code>, <code>grep</code>)</td><td>Listed the repository via the GitHub API, downloaded 18 raw files, and ran the novelty greps.</td></tr>
+    <tr><td><code>Grep</code>, <code>Glob</code>, <code>Read</code></td><td>Searched the folder for "jev", read <code>HANDOFF.md</code>, found existing files before writing.</td></tr>
+    <tr><td>Task notifications</td><td>Each subagent completion arrived as a system notice with its report, tool count, tokens, and duration. These are the source of the numbers above.</td></tr>
+  </tbody>
+</table>
+<p>The <code>advisor</code> tool was available, and I did not call it. The <code>Workflow</code> tool was not used (section 3).</p>
+
+<h2>9. What went wrong, and the fixes</h2>
+<ol>
+  <li><b>The topic was unreadable.</b> "jev" matched nothing useful in the folder. I asked in plain text instead of guessing, and started no agent, because a wrong topic would have been copied into every subagent brief.</li>
+  <li><b>The search that returned the wrong entity.</b> The query "JEV Japanese encephalitis virus new applications 2026" returned virology papers. The other two queries agreed with each other, so I dropped it.</li>
+  <li><b>WebFetch failed on the GitHub list.</b> The tool's answer: "I cannot provide the complete structure you've requested because the web page content provided does not contain the actual list contents." Fix: <code>curl</code> to the GitHub tree API, which showed <code>README.md</code> (231,420 bytes) and 16 files under <code>categories/</code>, then <code>curl</code> of each raw file into the scratchpad.</li>
+  <li><b>My brief had four errors, and the agents caught them.</b>
+    <ul>
+      <li>Run 1: I gave the ideators a 32,000-token context limit. The facts agent found 64k for the state plus all questions and 32k for the state plus the longest question.</li>
+      <li>Run 2: I wrote that scientific-pipelines had 1 entry and compliance-legal had 3. The map agent found 0 and 2. The extra count was the template line inside a code block.</li>
+      <li>Run 2: I wrote that the list had no LangGraph entry. An ideator found <code>typesafe-jev-workflow</code>.</li>
+    </ul>
+    I gave the agents the sources themselves, which is why they could check my summary of those sources.</li>
+  <li><b>I misstated the list size.</b> I said "about 480 entries". The four mappers' tallies sum to 552 (156 + 115 + 142 + 139), and a line count of <code>- </code> lines across the category files gave 568, which includes template lines. The tallies are hand counts and can be off by 1 or 2 per category.</li>
+  <li><b>Evidence that could not be checked.</b> The coverage agent could not read Forbes (HTTP 403), and the Hacker News thread it fetched was a different one (Jevmem). The community agent marked many Reddit and arXiv items "index only". The facts agent had no API key and could not run a call. Final answers repeated these limits.</li>
+  <li><b>Weak evidence flagged late.</b> One candidate (volunteer-transcription adjudication) was rated "high novelty" after only 2 search queries. I kept the rating but wrote the weakness next to it.</li>
+  <li><b>Hook notices.</b> A "Coach" hook asked me to surface two notes verbatim. The first said the prompt was over 8k characters, which did not match the user's short message. The second said the session had reached about 156k context tokens. I surfaced both.</li>
+</ol>
+
+<h3>Near-misses</h3>
+<ul>
+  <li><b>Wrong cost estimate for the run-1 winner.</b> A pure token count (about 400M tokens at $0.042 per MTok, so $17) suggested the contradiction scan was easy. The vendor request limit of 40 per second applied to about 999,000 calls gives about 6.9 hours. I wrote both numbers. The request limit is the tighter constraint of the two.</li>
+  <li><b>A confident "zero hits" claim.</b> Before I chose the run-2 winner, I ran my own grep for "dead letter", "dlq", "kafka", "poison", "message queue", "rabbitmq" and "sqs" on the README. There were no hits. So I did not have to rely on the ideator's report alone.</li>
+  <li><b>Crediting the wrong actor.</b> The skill did not launch the agents. The parent model launched them after it read the permission sentence in the prompt.</li>
+</ul>
+
+<h3>Fragility</h3>
+<ul>
+  <li>Agent tool results are summaries by other models. Their counts and URLs were not re-opened by me except in the one grep check.</li>
+  <li>Two runs on one task give no variance. A third run could pick a different number of agents.</li>
+  <li>Eleven of the 14 agent transcript files are 0 bytes on disk. The independence of those agents rests on their reports and on my own record of messages, not on their tool calls (section 6.2).</li>
+  <li>In run 1, I started stage 2 before agent 1.1 had reported, so its corrected context limits did not reach the ideators (section 6.4).</li>
+</ul>
+
+<h2>10. Costs, limits, and human moments</h2>
+<ul>
+  <li><b>Tokens:</b> 686,676 + 706,989 = 1,393,665 subagent tokens across 14 agents. The parent context reached about 156k tokens by mid-session (per the hook).</li>
+  <li><b>Quotas and rate limits:</b> none hit. No Jev API calls were made, so no TypeSafe credit was spent.</li>
+  <li><b>User actions:</b> (1) invoked the skill, (2) answered the topic question with "do search/research on jev", (3) replaced the evidence base with two URLs, (4) asked for this document and for git readiness. No permission prompt blocked a tool.</li>
+</ul>
+
+<h2>11. Verification</h2>
+<ul>
+  <li><b>Agent counts and numbers:</b> read from the 14 completion notices in this session, and the sums were computed twice.</li>
+  <li><b>List entry counts:</b> checked two ways (mapper tallies, and <code>grep -c '^- '</code> per file).</li>
+  <li><b>Winner claims:</b> the run-2 "zero hits" claim was checked by my own grep. The cost figures ($44.10 for 1M messages at 1,050 tokens, and $24.57 per million decisions at about 585 tokens) were recomputed from $0.042 per MTok.</li>
+  <li><b>Not verified:</b> that any proposed use case works. No candidate was run against Jev. No pass/fail threshold comes from the sources; they are agent proposals. The "reader" view was a judgment, with no reader test.</li>
+</ul>
+
+<h2>12. Where things stand</h2>
+<ul>
+  <li><b>Run 1 winner:</b> all-pairs contradiction scan of a policy corpus (both-order agreement gate). Runner-up: clause-ambiguity index.</li>
+  <li><b>Run 2 winner:</b> dead-letter-queue triage with a replay contract. Runner-up: questionnaire pretest with synthetic respondents.</li>
+  <li><b>Not done:</b> the skill's four planned tests in <code>HANDOFF.md</code> (control topic, small task, large task, team-sketch variant). This session gives one data point only. The question "does the agent count scale with the task" has no answer yet.</li>
+  <li><b>Not done:</b> the full rejected-candidate lists live only in the chat text. The agents' raw reports live in task output files under the session's temp directory, which does not persist. If you want them kept, say so and I will copy them into the repository.</li>
+  <li><b>Next steps, as options:</b> run the skill on one control topic with a different task size; run the same prompt with the sentence "Use brainstormers, researchers, and a panel of readers." and compare agent counts; add a reader-view agent, since none existed in either run.</li>
+</ul>
+
+<h2>13. Knowledge captured</h2>
+<p><code>HANDOFF.md</code> was updated in the same change as this document (git state, and a pointer to this file). No memory file was written. The scratchpad copy of the awesome-jev files was not saved to the repository, because it is third-party content.</p>
+
+<footer>Written on 2026-10-01 from the live session. Sources: the session transcript, 14 subagent completion notices, <code>~\.claude\skills\swarm-brainstorm\SKILL.md</code>, <code>HANDOFF.md</code>, <a href="https://typesafe.ai/blog/introducing-system-one-models-and-jev">the TypeSafe AI launch blog</a>, and <a href="https://github.com/yibie/awesome-jev">awesome-jev</a>.</footer>
+
+</main>
+</body>
+</html>
